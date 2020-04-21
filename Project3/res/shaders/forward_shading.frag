@@ -28,6 +28,8 @@ in vec2 vTexCoords;
 
 in vec3 vNormal;
 
+in vec3 pos;
+
 out vec4 outColor;
 
 void main(void)
@@ -50,15 +52,28 @@ void main(void)
 
     for (int i = 0; i < lightCount; i++)
     {
-        float diff = max(dot(norm, lightDirection[i]), 0.0);
+        vec3 lightDir = normalize(pos- lightPosition[i]);
+        float diff = max(dot(norm, lightDir), 0.0);
         diffuse += diff * lightColor[i];
     }
     diffuse *= (1.0/lightCount);
 
     // Specular
-    //float specularStrength = 0.5;
-    //vec3 viewDir = normalize()
+    float specularStrength = 0.5;
+    vec3 cameraPos = worldViewMatrix[3].xyz;
+    vec3 viewDir = normalize(cameraPos - pos);
+    vec3 _specular = vec3(0.0);
+
+    for (int i = 0; i < lightCount; i++)
+    {
+        vec3 reflectDir = reflect(-lightDirection[i], norm);
+       float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+       _specular += specularStrength * spec * lightColor[i];
+    }
+    _specular *= (1.0/lightCount);
+
+    _specular = clamp(_specular, vec3(0.0), vec3(1.0));
 
 
-    outColor.rgb = (ambient + diffuse) * texture(albedoTexture, vTexCoords).rgb;
+    outColor.rgb = (ambient + diffuse + _specular) * texture(albedoTexture, vTexCoords).rgb;
 }

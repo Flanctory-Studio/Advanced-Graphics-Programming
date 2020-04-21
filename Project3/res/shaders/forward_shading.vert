@@ -11,10 +11,12 @@ uniform mat4 worldViewMatrix;
 
 out vec2 vTexCoords;
 out vec3 vNormal;
+out vec3 pos;
 
 void main(void)
 {
     vTexCoords = texCoords;
     vNormal = normal;
+    pos = position;
     gl_Position = projectionMatrix * worldViewMatrix * vec4(position, 1);
 }
