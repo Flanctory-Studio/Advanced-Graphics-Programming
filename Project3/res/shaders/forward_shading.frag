@@ -34,8 +34,31 @@ void main(void)
 {
     // TODO: Local illumination
     // Ambient
-    // Diffuse
-    // Specular
+    float ambientStrength = 0.1;
+    vec3 ambient = vec3(0.0);
 
-    outColor.rgb = vNormal; //albedo.rgb;// * texture(albedoTexture, vTexCoords).rgb;
+    for (int i = 0; i < 8; i++)
+    {
+        ambient += lightColor[i];
+    }
+    ambient *= (1.0/8.0);
+    //ambient *= ambientStrength;
+
+    // Diffuse
+    vec3 norm = normalize(vNormal);
+    vec3 diffuse = vec3(0.0);
+
+    for (int i = 0; i < 8; i++)
+    {
+        float diff = max(dot(norm, lightDirection[i]), 0.0);
+        diffuse += diff * lightColor[i];
+    }
+    diffuse *= (1.0/8.0);
+
+    // Specular
+    //float specularStrength = 0.5;
+    //vec3 viewDir = normalize()
+
+
+    outColor.rgb = (ambient + diffuse) * texture(albedoTexture, vTexCoords).rgb;
 }
