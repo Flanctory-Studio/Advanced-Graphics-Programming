@@ -33,7 +33,7 @@ void MiscSettingsWidget::ForwardStateChange(int state)
     switch (cheked) {
     case Qt::CheckState::Unchecked:
     {
-
+        // TODO: Use this state for rendering the scene
     }
         break;
     case Qt::CheckState::Checked:
@@ -55,7 +55,7 @@ void MiscSettingsWidget::DeferredStateChange(int state)
     switch (cheked) {
     case Qt::CheckState::Unchecked:
     {
-
+        // TODO: Use this state for rendering the scene
     }
         break;
     case Qt::CheckState::Checked:
