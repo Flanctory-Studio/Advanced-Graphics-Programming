@@ -19,7 +19,56 @@ MiscSettingsWidget::MiscSettingsWidget(QWidget *parent) :
     connect(ui->checkBoxGrid, SIGNAL(clicked()), this, SLOT(onVisualHintChanged()));
     connect(ui->checkBoxLightSources, SIGNAL(clicked()), this, SLOT(onVisualHintChanged()));
     connect(ui->checkBoxSelectionOutline, SIGNAL(clicked()), this, SLOT(onVisualHintChanged()));
+
+
+    connect(ui->forward, SIGNAL(stateChanged(int)), this, SLOT(ForwardStateChange(int)));
+    connect(ui->deferred, SIGNAL(stateChanged(int)), this, SLOT(DeferredStateChange(int)));
+
 }
+
+void MiscSettingsWidget::ForwardStateChange(int state)
+{
+    Qt::CheckState cheked = Qt::CheckState(state);
+
+    switch (cheked) {
+    case Qt::CheckState::Unchecked:
+    {
+
+    }
+        break;
+    case Qt::CheckState::Checked:
+    {
+        ui->deferred->setCheckState(Qt::CheckState::Unchecked);
+    }
+        break;
+
+    default:
+        break;
+    }
+
+}
+
+void MiscSettingsWidget::DeferredStateChange(int state)
+{
+    Qt::CheckState cheked = Qt::CheckState(state);
+
+    switch (cheked) {
+    case Qt::CheckState::Unchecked:
+    {
+
+    }
+        break;
+    case Qt::CheckState::Checked:
+    {
+        ui->forward->setCheckState(Qt::CheckState::Unchecked);
+    }
+        break;
+
+    default:
+        break;
+    }
+}
+
 
 MiscSettingsWidget::~MiscSettingsWidget()
 {

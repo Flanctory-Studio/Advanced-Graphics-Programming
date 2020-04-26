@@ -27,6 +27,8 @@ public slots:
     void onBackgroundColorClicked();
     void onVisualHintChanged();
 
+    void ForwardStateChange(int state);
+    void DeferredStateChange(int state);
 private:
     Ui::MiscSettingsWidget *ui;
 };
