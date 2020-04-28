@@ -75,5 +75,5 @@ void main(void)
     _specular = clamp(_specular, vec3(0.0), vec3(1.0));
 
 
-    outColor.rgb = (ambient + diffuse + _specular) * texture(albedoTexture, vTexCoords).rgb;
+    outColor = vec4((ambient + diffuse + _specular) * texture(albedoTexture, vTexCoords).rgb, 1.0);
 }
