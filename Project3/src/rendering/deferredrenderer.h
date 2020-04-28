@@ -30,6 +30,7 @@ private:
     ShaderProgram *blitProgram;
 
     GLuint fboColor = 0;
+    GLuint fboNormal = 0;
     GLuint fboDepth = 0;
     FramebufferObject *fbo = nullptr;
 };

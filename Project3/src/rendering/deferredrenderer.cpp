@@ -52,6 +52,7 @@ DeferredRenderer::DeferredRenderer() :
 
     // List of textures
     addTexture("Final render");
+    addTexture("Normals");
     addTexture("White");
 }
 
@@ -107,6 +108,16 @@ void DeferredRenderer::resize(int w, int h)
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
+    if (fboNormal == 0) gl->glDeleteTextures(1, &fboNormal);
+    gl->glGenTextures(1, &fboNormal);
+    gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
     if (fboDepth == 0) gl->glDeleteTextures(1, &fboDepth);
     gl->glGenTextures(1, &fboDepth);
     gl->glBindTexture(GL_TEXTURE_2D, fboDepth);
@@ -122,6 +133,7 @@ void DeferredRenderer::resize(int w, int h)
 
     fbo->bind();
     fbo->addColorAttachment(0, fboColor);
+    fbo->addColorAttachment(1, fboNormal);
     fbo->addDepthAttachment(fboDepth);
     fbo->checkStatus();
     fbo->release();
@@ -273,12 +285,14 @@ void DeferredRenderer::passBlit()
         if (shownTexture() == "Final render") {
             gl->glBindTexture(GL_TEXTURE_2D, fboColor);
         }
+        else if (shownTexture() == "Normals") {
+            gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
+        }
+
         else if (shownTexture() == "White") {
             gl->glBindTexture(GL_TEXTURE_2D, resourceManager->texWhite->textureId());
         }
-        else if (shownTexture() == "Black") {
-            gl->glBindTexture(GL_TEXTURE_2D, resourceManager->texBlack->textureId());
-        }
+
 
         // TODO: Add black texture, just for testing purposes
 
