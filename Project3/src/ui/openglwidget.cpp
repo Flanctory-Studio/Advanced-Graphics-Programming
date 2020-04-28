@@ -42,8 +42,8 @@ OpenGLWidget::OpenGLWidget(QWidget *parent)
     selection = new Selection();
 
     //TODO: CHANGE BETWEEN FORWARD RENDERER AND DEFERRED RENDERER
-    renderer = new ForwardRenderer();
-    //renderer = new DeferredRenderer();
+    //renderer = new ForwardRenderer();
+    renderer = new DeferredRenderer();
 
     miscSettings = new MiscSettings();
 

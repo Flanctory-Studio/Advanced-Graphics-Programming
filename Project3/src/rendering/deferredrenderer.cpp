@@ -53,7 +53,6 @@ DeferredRenderer::DeferredRenderer() :
     // List of textures
     addTexture("Final render");
     addTexture("White");
-    addTexture("Black"); // WIP
 }
 
 DeferredRenderer::~DeferredRenderer()
