@@ -30,12 +30,13 @@ in vec3 vNormal;
 
 in vec3 pos;
 
-out vec4 outColor;
-out vec4 outNormals;
+layout (location = 0) out vec4 outColor;
+layout (location = 1) out vec4 outNormals;
+
 
 void main(void)
 {
-    // TODO: Local illumination
+    // Local illumination
     // Ambient
     float ambientStrength = 0.1;
     vec3 ambient = vec3(0.0);

@@ -132,6 +132,15 @@ void DeferredRenderer::resize(int w, int h)
     // Attach textures to the fbo
 
     fbo->bind();
+
+    // Draw on selected buffers
+    GLenum buffs[]=
+    {
+        GL_COLOR_ATTACHMENT0,
+        GL_COLOR_ATTACHMENT1
+    };
+    gl->glDrawBuffers(2, buffs);
+
     fbo->addColorAttachment(0, fboColor);
     fbo->addColorAttachment(1, fboNormal);
     fbo->addDepthAttachment(fboDepth);
