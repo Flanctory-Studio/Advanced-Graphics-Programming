@@ -27,10 +27,11 @@ private:
 
     // Shaders
     ShaderProgram *forwardProgram = nullptr;
-    ShaderProgram *blitProgram;
+    ShaderProgram *blitProgram;  
 
-    GLuint fboColor = 0;
+    GLuint fboPosition = 0;
     GLuint fboNormal = 0;
+    GLuint fboAlbedo = 0;
     GLuint fboDepth = 0;
     FramebufferObject *fbo = nullptr;
 };

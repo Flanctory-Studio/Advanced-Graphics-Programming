@@ -30,8 +30,8 @@ in vec3 vNormal;
 
 in vec3 pos;
 
-layout (location = 0) out vec4 outColor;
-layout (location = 1) out vec4 outNormals;
+out vec4 outColor;
+
 
 void main(void)
 {
@@ -77,5 +77,4 @@ void main(void)
 
 
     outColor = vec4((ambient + diffuse + _specular) * texture(albedoTexture, vTexCoords).rgb, 1.0);
-    outNormals = vec4(vNormal, 1.0);
 }
