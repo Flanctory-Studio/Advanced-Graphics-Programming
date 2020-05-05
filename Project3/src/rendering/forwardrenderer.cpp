@@ -281,8 +281,6 @@ void ForwardRenderer::passBlit()
             gl->glBindTexture(GL_TEXTURE_2D, resourceManager->texBlack->textureId());
         }
 
-        // TODO: Add black texture, just for testing purposes
-
         resourceManager->quad->submeshes[0]->draw();
     }
 

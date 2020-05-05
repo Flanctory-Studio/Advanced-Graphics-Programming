@@ -69,8 +69,8 @@ void DeferredRenderer::initialize()
 
     forwardProgram = resourceManager->createShaderProgram();
     forwardProgram->name = "Forward shading";
-    forwardProgram->vertexShaderFilename = "res/shaders/forward_shading.vert";
-    forwardProgram->fragmentShaderFilename = "res/shaders/forward_shading.frag";
+    forwardProgram->vertexShaderFilename = "res/shaders/deferred_shading.vert";
+    forwardProgram->fragmentShaderFilename = "res/shaders/deferred_shading.frag";
     forwardProgram->includeForSerialization = false;
 
     blitProgram = resourceManager->createShaderProgram();
@@ -78,7 +78,6 @@ void DeferredRenderer::initialize()
     blitProgram->vertexShaderFilename = "res/shaders/blit.vert";
     blitProgram->fragmentShaderFilename = "res/shaders/blit.frag";
     blitProgram->includeForSerialization = false;
-
 
     // Create FBO
 

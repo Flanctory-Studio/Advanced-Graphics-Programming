@@ -112,6 +112,8 @@ RESOURCES += \
 DISTFILES += \
     res/shaders/blit.frag \
     res/shaders/blit.vert \
+    res/shaders/deferred_shading.frag \
+    res/shaders/deferred_shading.vert \
     res/shaders/forward_shading.frag \
     res/shaders/forward_shading.vert \
     res/shaders/texture_view.frag \
