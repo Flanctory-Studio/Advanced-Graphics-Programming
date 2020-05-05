@@ -68,11 +68,17 @@ void DeferredRenderer::initialize()
 
     // Create programs
 
-    forwardProgram = resourceManager->createShaderProgram();
-    forwardProgram->name = "Forward shading";
-    forwardProgram->vertexShaderFilename = "res/shaders/deferred_shading.vert";
-    forwardProgram->fragmentShaderFilename = "res/shaders/deferred_shading.frag";
-    forwardProgram->includeForSerialization = false;
+    deferredGeometry = resourceManager->createShaderProgram();
+    deferredGeometry->name = "Deferred Geometry";
+    deferredGeometry->vertexShaderFilename = "res/shaders/deferred_shading.vert";
+    deferredGeometry->fragmentShaderFilename = "res/shaders/deferred_shading.frag";
+    deferredGeometry->includeForSerialization = false;
+
+    deferredGeometry = resourceManager->createShaderProgram();
+    deferredGeometry->name = "Deferred Light";
+    deferredGeometry->vertexShaderFilename = "res/shaders/light_pass.vert";
+    deferredGeometry->fragmentShaderFilename = "res/shaders/light_pass.frag";
+    deferredGeometry->includeForSerialization = false;
 
     blitProgram = resourceManager->createShaderProgram();
     blitProgram->name = "Blit";
@@ -177,6 +183,8 @@ void DeferredRenderer::render(Camera *camera)
     // Passes
     passMeshes(camera);
 
+    passLights(camera);
+
     fbo->release();
 
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -186,7 +194,7 @@ void DeferredRenderer::render(Camera *camera)
 
 void DeferredRenderer::passMeshes(Camera *camera)
 {
-    QOpenGLShaderProgram &program = forwardProgram->program;
+    QOpenGLShaderProgram &program = deferredGeometry->program;
 
     if (program.bind())
     {
@@ -292,6 +300,41 @@ void DeferredRenderer::passMeshes(Camera *camera)
     }
 }
 
+void DeferredRenderer::passLights(Camera *camera)
+{
+    QOpenGLShaderProgram &program = defferredLight->program;
+    if(program.bind())
+    {
+
+        QVector<LightSource*> lightSources;
+
+        // Get components
+        for (auto entity : scene->entities)
+        {
+            if (entity->active)
+                if (entity->lightSource != nullptr) { lightSources.push_back(entity->lightSource); }
+        }
+
+        if (miscSettings->renderLightSources)
+        {
+
+            int count = 0;
+            for (auto lightSource : lightSources)
+            {
+                QString text = "lightPositions["+QString::number(count)+"]";
+                program.setUniformValue(text.toStdString().c_str(), lightSource->entity->transform->position);
+                text = "lightColors["+QString::number(count)+"]";
+                program.setUniformValue(text.toStdString().c_str(), lightSource->color);
+                count++;
+            }
+
+            QVector4D cameraPos;
+            cameraPos = camera->viewMatrix.row(3);
+            program.setUniformValue("viewPos", cameraPos.toVector3D());
+
+        }
+    }
+}
 void DeferredRenderer::passBlit()
 {
     gl->glDisable(GL_DEPTH_TEST);
