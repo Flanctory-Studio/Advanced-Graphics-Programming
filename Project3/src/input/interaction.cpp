@@ -129,7 +129,7 @@ bool Interaction::navigate()
     {
         accelerating = true;
         speedVector += QVector3D(0.0f,
-                                 cosf(qDegreesToRadians(pitch)),
+                                 cosf(qDegreesToRadians(pitch)) * a * t,
                                  0.0f);
     }
 
@@ -137,7 +137,7 @@ bool Interaction::navigate()
     {
         accelerating = true;
         speedVector -= QVector3D(0.0f,
-                                 cosf(qDegreesToRadians(pitch)),
+                                 cosf(qDegreesToRadians(pitch)) * a * t,
                                  0.0f);
     }
 
