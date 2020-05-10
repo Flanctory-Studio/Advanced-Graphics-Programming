@@ -73,7 +73,7 @@ void DeferredRenderer::initialize()
     // Create programs
 
     deferredGeometry = resourceManager->createShaderProgram();
-    deferredGeometry->name = "Forward shading";
+    deferredGeometry->name = "Deferred Geometry";
     deferredGeometry->vertexShaderFilename = "res/shaders/deferred_shading.vert";
     deferredGeometry->fragmentShaderFilename = "res/shaders/deferred_shading.frag";
     deferredGeometry->includeForSerialization = false;
@@ -92,10 +92,10 @@ void DeferredRenderer::initialize()
 
     // Create FBO
 
-    fboGeometry = new FramebufferObject;
+    fboGeometry = new FramebufferObject();
     fboGeometry->create();
 
-    fboLight = new FramebufferObject;
+    fboLight = new FramebufferObject();
     fboLight->create();
 }
 
@@ -175,6 +175,31 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
 
 void DeferredRenderer::GenerateLightFBO(int w, int h)
 {
+//    if (fboFinal == 0) gl->glDeleteTextures(1, &fboFinal);
+//    gl->glGenTextures(1, &fboFinal);
+//    gl->glBindTexture(GL_TEXTURE_2D, fboFinal);
+//    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+//    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+//    glBindTexture(GL_TEXTURE_2D,0);
+//    // Attach textures to the fbo
+//    fboLight->bind();
+
+//    // Draw on selected buffers
+//    GLenum buffs[]=
+//    {
+//        GL_COLOR_ATTACHMENT0,
+//    };
+//    gl->glDrawBuffers(1, buffs);
+
+//    fboLight->addColorAttachment(0, fboFinal);
+//    fboLight->checkStatus();
+//    fboLight->release();
+
     if (fboFinal == 0) gl->glDeleteTextures(1, &fboFinal);
     gl->glGenTextures(1, &fboFinal);
     gl->glBindTexture(GL_TEXTURE_2D, fboFinal);
@@ -186,13 +211,15 @@ void DeferredRenderer::GenerateLightFBO(int w, int h)
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
     glBindTexture(GL_TEXTURE_2D,0);
+
     // Attach textures to the fbo
+
     fboLight->bind();
 
     // Draw on selected buffers
     GLenum buffs[]=
     {
-        GL_COLOR_ATTACHMENT0,
+        GL_COLOR_ATTACHMENT0
     };
     gl->glDrawBuffers(1, buffs);
 
@@ -233,6 +260,8 @@ void DeferredRenderer::render(Camera *camera)
     fboGeometry->release();
 
 
+    gl->glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     fboLight->bind();
     // Clear color
     gl->glClearDepth(1.0);
@@ -243,7 +272,6 @@ void DeferredRenderer::render(Camera *camera)
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     passLights(camera);
-
     fboLight->release();
 
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -368,6 +396,9 @@ void DeferredRenderer::passLights(Camera *camera)
 
     if(program.bind())
     {
+        program.setUniformValue("viewMatrix", camera->viewMatrix);
+        program.setUniformValue("projectionMatrix", camera->projectionMatrix);
+
         QVector<QVector3D> lightPosition;
         QVector<QVector3D> lightDirection;
 
@@ -393,6 +424,9 @@ void DeferredRenderer::passLights(Camera *camera)
             program.setUniformValue("gNormal", fboNormal);
             program.setUniformValue("gAlbedoSpec", fboAlbedo);
         }
+        resourceManager->quad->submeshes[0]->draw();
+
+
         program.release();
     }
 }
