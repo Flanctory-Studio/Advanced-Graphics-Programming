@@ -48,9 +48,10 @@ DeferredRenderer::DeferredRenderer() :
     fboPosition(QOpenGLTexture::Target2D),
     fboDepth(QOpenGLTexture::Target2D)
 {
-    fbo = nullptr;
+    fboGeometry = nullptr;
 
     // List of textures
+    addTexture("Final");
     addTexture("Position");
     addTexture("Normals");
     addTexture("Albedo");
@@ -59,7 +60,7 @@ DeferredRenderer::DeferredRenderer() :
 
 DeferredRenderer::~DeferredRenderer()
 {
-    delete fbo;
+    delete fboGeometry;
 }
 
 void DeferredRenderer::initialize()
@@ -88,22 +89,24 @@ void DeferredRenderer::initialize()
 
     // Create FBO
 
-    fbo = new FramebufferObject;
-    fbo->create();
+    fboGeometry = new FramebufferObject;
+    fboGeometry->create();
+
+    fboLight = new FramebufferObject;
+    fboLight->create();
 }
 
 void DeferredRenderer::finalize()
 {
-    fbo->destroy();
-    delete fbo;
+    fboGeometry->destroy();
+    delete fboGeometry;
+
+    fboLight->destroy();
+    delete fboLight;
 }
 
-void DeferredRenderer::resize(int w, int h)
+void DeferredRenderer::GenerateGeometryFBO(int w, int h)
 {
-    OpenGLErrorGuard guard("ForwardRenderer::resize()");
-
-    // Regenerate render targets
-
     if (fboPosition == 0) gl->glDeleteTextures(1, &fboPosition);
     gl->glGenTextures(1, &fboPosition);
     gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
@@ -147,7 +150,7 @@ void DeferredRenderer::resize(int w, int h)
 
     // Attach textures to the fbo
 
-    fbo->bind();
+    fboGeometry->bind();
 
     // Draw on selected buffers
     GLenum buffs[]=
@@ -155,22 +158,64 @@ void DeferredRenderer::resize(int w, int h)
         GL_COLOR_ATTACHMENT0,
         GL_COLOR_ATTACHMENT1,
         GL_COLOR_ATTACHMENT2,
+        GL_DEPTH_ATTACHMENT
     };
     gl->glDrawBuffers(3, buffs);
 
-    fbo->addColorAttachment(0, fboPosition);
-    fbo->addColorAttachment(1, fboNormal);
-    fbo->addColorAttachment(2, fboAlbedo);
-    fbo->addDepthAttachment(fboDepth);
-    fbo->checkStatus();
-    fbo->release();
+    fboGeometry->addColorAttachment(0, fboPosition);
+    fboGeometry->addColorAttachment(1, fboNormal);
+    fboGeometry->addColorAttachment(2, fboAlbedo);
+    fboGeometry->addDepthAttachment(fboDepth);
+    fboGeometry->checkStatus();
+    fboGeometry->release();
+}
+
+void DeferredRenderer::GenerateLightFBO(int w, int h)
+{
+    if (fboFinal == 0) gl->glDeleteTextures(1, &fboFinal);
+    gl->glGenTextures(1, &fboFinal);
+    gl->glBindTexture(GL_TEXTURE_2D, fboFinal);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+    // Attach textures to the fbo
+    fboLight->bind();
+
+    // Draw on selected buffers
+    GLenum buffs[]=
+    {
+        GL_COLOR_ATTACHMENT0,
+    };
+    gl->glDrawBuffers(1, buffs);
+
+    fboLight->addColorAttachment(0, fboFinal);
+    fboLight->addDepthAttachment(fboDepth);
+    fboLight->checkStatus();
+    fboLight->release();
+}
+
+void DeferredRenderer::resize(int w, int h)
+{
+    OpenGLErrorGuard guard("ForwardRenderer::resize()");
+
+    // Regenerate render targets
+
+    // fbo Geometry
+    GenerateGeometryFBO(w, h);
+
+    // fbo Light
+    GenerateLightFBO(w, h);
 }
 
 void DeferredRenderer::render(Camera *camera)
 {
     OpenGLErrorGuard guard("ForwardRenderer::render()");
 
-    fbo->bind();
+    fboGeometry->bind();
 
     // Clear color
     gl->glClearDepth(1.0);
@@ -182,10 +227,22 @@ void DeferredRenderer::render(Camera *camera)
 
     // Passes
     passMeshes(camera);
+    fboGeometry->release();
+
+
+    fboLight->bind();
+    // Clear color
+    gl->glClearDepth(1.0);
+    gl->glClearColor(miscSettings->backgroundColor.redF(),
+                     miscSettings->backgroundColor.greenF(),
+                     miscSettings->backgroundColor.blueF(),
+                     1.0);
+    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     passLights(camera);
+    fboLight->release();
 
-    fbo->release();
+
 
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -347,6 +404,9 @@ void DeferredRenderer::passBlit()
         program.setUniformValue("colorTexture", 0);
         gl->glActiveTexture(GL_TEXTURE0);
 
+        if (shownTexture() == "Final") {
+            gl->glBindTexture(GL_TEXTURE_2D, fboFinal);
+        }
         if (shownTexture() == "Position") {
             gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
         }
