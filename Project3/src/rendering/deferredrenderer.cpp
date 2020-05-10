@@ -253,6 +253,8 @@ void DeferredRenderer::render(Camera *camera)
 
 void DeferredRenderer::passMeshes(Camera *camera)
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     QOpenGLShaderProgram &program = deferredGeometry->program;
 
     if (program.bind())
@@ -360,6 +362,8 @@ void DeferredRenderer::passMeshes(Camera *camera)
 
 void DeferredRenderer::passLights(Camera *camera)
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     QOpenGLShaderProgram &program = deferredLight->program;
 
     if(program.bind())
