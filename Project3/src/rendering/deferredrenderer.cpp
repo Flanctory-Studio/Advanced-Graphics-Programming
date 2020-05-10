@@ -65,7 +65,7 @@ DeferredRenderer::~DeferredRenderer()
 
 void DeferredRenderer::initialize()
 {
-    OpenGLErrorGuard guard("ForwardRenderer::initialize()");
+    OpenGLErrorGuard guard("DeferredRenderer::initialize()");
 
     // Create programs
 
@@ -200,7 +200,7 @@ void DeferredRenderer::GenerateLightFBO(int w, int h)
 
 void DeferredRenderer::resize(int w, int h)
 {
-    OpenGLErrorGuard guard("ForwardRenderer::resize()");
+    OpenGLErrorGuard guard("DeferredRenderer::resize()");
 
     // Regenerate render targets
 
@@ -213,7 +213,7 @@ void DeferredRenderer::resize(int w, int h)
 
 void DeferredRenderer::render(Camera *camera)
 {
-    OpenGLErrorGuard guard("ForwardRenderer::render()");
+    OpenGLErrorGuard guard("DeferredRenderer::render()");
 
     fboGeometry->bind();
 
@@ -241,8 +241,6 @@ void DeferredRenderer::render(Camera *camera)
 
     passLights(camera);
     fboLight->release();
-
-
 
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -420,7 +418,6 @@ void DeferredRenderer::passBlit()
         else if (shownTexture() == "Depth") {
             gl->glBindTexture(GL_TEXTURE_2D, fboDepth);
         }
-
 
         resourceManager->quad->submeshes[0]->draw();
     }
