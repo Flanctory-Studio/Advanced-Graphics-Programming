@@ -51,6 +51,7 @@ DeferredRenderer::DeferredRenderer() :
     fboGeometry = nullptr;
 
     // List of textures
+    addTexture("Final");
     addTexture("Position");
     addTexture("Normals");
     addTexture("Albedo");
@@ -403,6 +404,9 @@ void DeferredRenderer::passBlit()
         program.setUniformValue("colorTexture", 0);
         gl->glActiveTexture(GL_TEXTURE0);
 
+        if (shownTexture() == "Final") {
+            gl->glBindTexture(GL_TEXTURE_2D, fboFinal);
+        }
         if (shownTexture() == "Position") {
             gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
         }
