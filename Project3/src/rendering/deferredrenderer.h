@@ -29,7 +29,7 @@ private:
     // Shaders
     ShaderProgram *deferredGeometry = nullptr;
     ShaderProgram *blitProgram = nullptr;
-    ShaderProgram *defferredLight = nullptr;
+    ShaderProgram *deferredLight = nullptr;
 
     GLuint fboPosition = 0;
     GLuint fboNormal = 0;

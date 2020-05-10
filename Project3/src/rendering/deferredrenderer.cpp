@@ -69,16 +69,16 @@ void DeferredRenderer::initialize()
     // Create programs
 
     deferredGeometry = resourceManager->createShaderProgram();
-    deferredGeometry->name = "Deferred Geometry";
+    deferredGeometry->name = "Forward shading";
     deferredGeometry->vertexShaderFilename = "res/shaders/deferred_shading.vert";
     deferredGeometry->fragmentShaderFilename = "res/shaders/deferred_shading.frag";
     deferredGeometry->includeForSerialization = false;
 
-    deferredGeometry = resourceManager->createShaderProgram();
-    deferredGeometry->name = "Deferred Light";
-    deferredGeometry->vertexShaderFilename = "res/shaders/light_pass.vert";
-    deferredGeometry->fragmentShaderFilename = "res/shaders/light_pass.frag";
-    deferredGeometry->includeForSerialization = false;
+    deferredLight = resourceManager->createShaderProgram();
+    deferredLight->name = "Deferred Light";
+    deferredLight->vertexShaderFilename = "res/shaders/light_pass.vert";
+    deferredLight->fragmentShaderFilename = "res/shaders/light_pass.frag";
+    deferredLight->includeForSerialization = false;
 
     blitProgram = resourceManager->createShaderProgram();
     blitProgram->name = "Blit";
@@ -302,7 +302,8 @@ void DeferredRenderer::passMeshes(Camera *camera)
 
 void DeferredRenderer::passLights(Camera *camera)
 {
-    QOpenGLShaderProgram &program = defferredLight->program;
+    QOpenGLShaderProgram &program = deferredLight->program;
+
     if(program.bind())
     {
 
