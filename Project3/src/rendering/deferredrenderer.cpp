@@ -414,16 +414,21 @@ void DeferredRenderer::passLights(Camera *camera)
         {
             if(lightPosition.length() > 0 && lightDirection.length() > 0)
             {
+                qDebug() << "aqgasdfgagaer";
                 program.setUniformValueArray("lightPosition", &lightPosition[0], lightPosition.length());
                 program.setUniformValueArray("lightDirection", &lightDirection[0], lightDirection.length());
             }
+        }
             QVector4D cameraPos;
             cameraPos = camera->viewMatrix.row(3);
-            program.setUniformValue("viewPos", cameraPos.toVector3D());
-            program.setUniformValue("gPosition", fboPosition);
-            program.setUniformValue("gNormal", fboNormal);
-            program.setUniformValue("gAlbedoSpec", fboAlbedo);
-        }
+
+             gl->glActiveTexture(GL_TEXTURE0);
+             gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
+             gl->glActiveTexture(GL_TEXTURE1);
+             gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
+             gl->glActiveTexture(GL_TEXTURE2);
+             gl->glBindTexture(GL_TEXTURE_2D, fboAlbedo);
+
         resourceManager->quad->submeshes[0]->draw();
 
 
