@@ -46,9 +46,11 @@ static void sendLightsToProgram(QOpenGLShaderProgram &program, const QMatrix4x4 
 
 DeferredRenderer::DeferredRenderer() :
     fboPosition(QOpenGLTexture::Target2D),
+    fboFinal(QOpenGLTexture::Target2D),
     fboDepth(QOpenGLTexture::Target2D)
 {
     fboGeometry = nullptr;
+    fboLight = nullptr;
 
     // List of textures
     addTexture("Final");
@@ -61,11 +63,12 @@ DeferredRenderer::DeferredRenderer() :
 DeferredRenderer::~DeferredRenderer()
 {
     delete fboGeometry;
+    delete fboLight;
 }
 
 void DeferredRenderer::initialize()
 {
-    OpenGLErrorGuard guard("ForwardRenderer::initialize()");
+    OpenGLErrorGuard guard(__FUNCTION__);
 
     // Create programs
 
@@ -147,6 +150,7 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
+    glBindTexture(GL_TEXTURE_2D,0);
 
     // Attach textures to the fbo
 
@@ -158,7 +162,6 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
         GL_COLOR_ATTACHMENT0,
         GL_COLOR_ATTACHMENT1,
         GL_COLOR_ATTACHMENT2,
-        GL_DEPTH_ATTACHMENT
     };
     gl->glDrawBuffers(3, buffs);
 
@@ -182,6 +185,7 @@ void DeferredRenderer::GenerateLightFBO(int w, int h)
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
+    glBindTexture(GL_TEXTURE_2D,0);
     // Attach textures to the fbo
     fboLight->bind();
 
@@ -193,14 +197,13 @@ void DeferredRenderer::GenerateLightFBO(int w, int h)
     gl->glDrawBuffers(1, buffs);
 
     fboLight->addColorAttachment(0, fboFinal);
-    fboLight->addDepthAttachment(fboDepth);
     fboLight->checkStatus();
     fboLight->release();
 }
 
 void DeferredRenderer::resize(int w, int h)
 {
-    OpenGLErrorGuard guard("ForwardRenderer::resize()");
+    OpenGLErrorGuard guard(__FUNCTION__);
 
     // Regenerate render targets
 
@@ -213,7 +216,7 @@ void DeferredRenderer::resize(int w, int h)
 
 void DeferredRenderer::render(Camera *camera)
 {
-    OpenGLErrorGuard guard("ForwardRenderer::render()");
+    OpenGLErrorGuard guard(__FUNCTION__);
 
     fboGeometry->bind();
 
@@ -240,9 +243,8 @@ void DeferredRenderer::render(Camera *camera)
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     passLights(camera);
+
     fboLight->release();
-
-
 
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -352,7 +354,6 @@ void DeferredRenderer::passMeshes(Camera *camera)
                 }
             }
         }
-
         program.release();
     }
 }
@@ -388,8 +389,10 @@ void DeferredRenderer::passLights(Camera *camera)
             program.setUniformValue("gNormal", fboNormal);
             program.setUniformValue("gAlbedoSpec", fboAlbedo);
         }
+        program.release();
     }
 }
+
 void DeferredRenderer::passBlit()
 {
     gl->glDisable(GL_DEPTH_TEST);
@@ -418,9 +421,10 @@ void DeferredRenderer::passBlit()
             gl->glBindTexture(GL_TEXTURE_2D, fboDepth);
         }
 
-
         resourceManager->quad->submeshes[0]->draw();
+        program.release();
     }
 
+    gl->glBindTexture(GL_TEXTURE_2D, 0);
     gl->glEnable(GL_DEPTH_TEST);
 }

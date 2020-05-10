@@ -125,6 +125,22 @@ bool Interaction::navigate()
                                         -sinf(qDegreesToRadians(yaw))) * a * t;
     }
 
+    if (input->keys[Qt::Key_E] == KeyState::Pressed) // Up
+    {
+        accelerating = true;
+        speedVector += QVector3D(0.0f,
+                                 cosf(qDegreesToRadians(pitch)),
+                                 0.0f);
+    }
+
+    if (input->keys[Qt::Key_Q] == KeyState::Pressed) // Down
+    {
+        accelerating = true;
+        speedVector -= QVector3D(0.0f,
+                                 cosf(qDegreesToRadians(pitch)),
+                                 0.0f);
+    }
+
     if (!accelerating) {
         speedVector *= 0.9;
     }
