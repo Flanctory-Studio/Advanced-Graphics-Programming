@@ -363,33 +363,30 @@ void DeferredRenderer::passLights(Camera *camera)
 
     if(program.bind())
     {
+        QVector<QVector3D> lightPosition;
+        QVector<QVector3D> lightDirection;
 
-        QVector<LightSource*> lightSources;
-
-        // Get components
         for (auto entity : scene->entities)
         {
-            if (entity->active)
-                if (entity->lightSource != nullptr) { lightSources.push_back(entity->lightSource); }
+            if (entity->active && entity->lightSource != nullptr)
+            {
+                lightPosition.push_back(QVector3D(camera->viewMatrix * entity->transform->matrix() * QVector4D(0.0, 0.0, 0.0, 1.0)));
+                lightDirection.push_back(QVector3D(camera->viewMatrix * entity->transform->matrix() * QVector4D(0.0, 1.0, 0.0, 0.0)));
+            }
         }
-
         if (miscSettings->renderLightSources)
         {
-
-            int count = 0;
-            for (auto lightSource : lightSources)
+            if(lightPosition.length() > 0 && lightDirection.length() > 0)
             {
-                QString text = "lightPositions["+QString::number(count)+"]";
-                program.setUniformValue(text.toStdString().c_str(), lightSource->entity->transform->position);
-                text = "lightColors["+QString::number(count)+"]";
-                program.setUniformValue(text.toStdString().c_str(), lightSource->color);
-                count++;
+                program.setUniformValueArray("lightPosition", &lightPosition[0], lightPosition.length());
+                program.setUniformValueArray("lightDirection", &lightDirection[0], lightDirection.length());
             }
-
             QVector4D cameraPos;
             cameraPos = camera->viewMatrix.row(3);
             program.setUniformValue("viewPos", cameraPos.toVector3D());
-
+            program.setUniformValue("gPosition", fboPosition);
+            program.setUniformValue("gNormal", fboNormal);
+            program.setUniformValue("gAlbedoSpec", fboAlbedo);
         }
     }
 }
