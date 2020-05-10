@@ -38,8 +38,8 @@ private:
     GLuint fboPosition = 0;
     GLuint fboNormal = 0;
     GLuint fboAlbedo = 0;
-    GLuint fboDepth = 0;
     GLuint fboFinal = 0;
+    GLuint fboDepth = 0;
     FramebufferObject *fboGeometry = nullptr;
     FramebufferObject *fboLight = nullptr;
 };
