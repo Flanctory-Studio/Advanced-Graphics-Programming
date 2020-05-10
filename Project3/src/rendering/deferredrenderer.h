@@ -20,6 +20,10 @@ public:
     void resize(int width, int height) override;
     void render(Camera *camera) override;
 
+    void GenerateGeometryFBO(int w, int h);
+
+    void GenerateLightFBO(int w, int h);
+
 private:
 
     void passLights(Camera *camera);
@@ -35,7 +39,9 @@ private:
     GLuint fboNormal = 0;
     GLuint fboAlbedo = 0;
     GLuint fboDepth = 0;
-    FramebufferObject *fbo = nullptr;
+    GLuint fboFinal = 0;
+    FramebufferObject *fboGeometry = nullptr;
+    FramebufferObject *fboLight = nullptr;
 };
 
 #endif // DEFERREDRENDERER_H
