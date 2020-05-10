@@ -246,8 +246,6 @@ void DeferredRenderer::render(Camera *camera)
 
     fboLight->release();
 
-
-
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     passBlit();
@@ -424,7 +422,6 @@ void DeferredRenderer::passBlit()
         else if (shownTexture() == "Depth") {
             gl->glBindTexture(GL_TEXTURE_2D, fboDepth);
         }
-
 
         resourceManager->quad->submeshes[0]->draw();
         program.release();
