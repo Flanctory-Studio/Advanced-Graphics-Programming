@@ -45,4 +45,7 @@ void main()
     }
     outColor = vec4(lighting, 1.0);
 
+
+    //outColor = vec4(lightPositions[0], 1.0);
+
 }

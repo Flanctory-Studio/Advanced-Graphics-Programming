@@ -403,22 +403,25 @@ void DeferredRenderer::passLights(Camera *camera)
         program.setUniformValue("projectionMatrix", camera->projectionMatrix);
 
         QVector<QVector3D> lightPosition;
-        QVector<QVector3D> lightDirection;
+        QVector<QVector3D> lightColors;
 
         for (auto entity : scene->entities)
         {
             if (entity->active && entity->lightSource != nullptr)
             {
-                lightPosition.push_back(QVector3D(camera->viewMatrix * entity->transform->matrix() * QVector4D(0.0, 0.0, 0.0, 1.0)));
-                lightDirection.push_back(QVector3D(camera->viewMatrix * entity->transform->matrix() * QVector4D(0.0, 1.0, 0.0, 0.0)));
+                qDebug() << "NOT Sending light: " << entity->transform->position;
+                lightPosition.push_back(entity->transform->position);
+                lightColors.push_back(QVector3D(entity->lightSource->color.redF(), entity->lightSource->color.greenF(), entity->lightSource->color.blueF()));
             }
         }
+
         if (miscSettings->renderLightSources)
         {
-            if(lightPosition.length() > 0 && lightDirection.length() > 0)
+            if(lightPosition.length() > 0 && lightColors.length() > 0)
             {
-                program.setUniformValueArray("lightPosition", &lightPosition[0], lightPosition.length());
-                program.setUniformValueArray("lightDirection", &lightDirection[0], lightDirection.length());
+                qDebug() << "Sending light: " << lightPosition[0];
+                program.setUniformValueArray("lightPositions", &lightPosition[0], lightPosition.length());
+                program.setUniformValueArray("lightColors", &lightColors[0], lightColors.length());
             }
         }
 
