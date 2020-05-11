@@ -14,7 +14,7 @@ layout (location = 2) out vec4 outAlbedo;
 void main(void)
 {
     outPosition = vec4(pos, 1.0);
-    outNormals = vec4(vNormal, 1.0);
+    outNormals = vec4(vNormal * 0.5 + vec3(0.5), 1.0);
     outAlbedo.rgb = texture(albedoTexture, vTexCoords).rgb;
     outAlbedo.a = texture(specularTexture, vTexCoords).r;
 }

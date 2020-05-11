@@ -249,10 +249,7 @@ void DeferredRenderer::render(Camera *camera)
 
     // Clear color
     gl->glClearDepth(1.0);
-    gl->glClearColor(miscSettings->backgroundColor.redF(),
-                     miscSettings->backgroundColor.greenF(),
-                     miscSettings->backgroundColor.blueF(),
-                     1.0);
+    gl->glClearColor(0.0, 0.0, 0.0,1.0);
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Passes
@@ -265,10 +262,8 @@ void DeferredRenderer::render(Camera *camera)
     fboLight->bind();
     // Clear color
     gl->glClearDepth(1.0);
-    gl->glClearColor(miscSettings->backgroundColor.redF(),
-                     miscSettings->backgroundColor.greenF(),
-                     miscSettings->backgroundColor.blueF(),
-                     1.0);
+    gl->glClearColor(0.0, 0.0, 0.0,1.0);
+
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     passLights(camera);
@@ -404,14 +399,17 @@ void DeferredRenderer::passLights(Camera *camera)
 
         QVector<QVector3D> lightPosition;
         QVector<QVector3D> lightColors;
+        QVector<GLfloat> lightIntensity;
+        QVector<GLfloat> lightRange;
 
         for (auto entity : scene->entities)
         {
             if (entity->active && entity->lightSource != nullptr)
             {
-                qDebug() << "NOT Sending light: " << entity->transform->position;
                 lightPosition.push_back(entity->transform->position);
                 lightColors.push_back(QVector3D(entity->lightSource->color.redF(), entity->lightSource->color.greenF(), entity->lightSource->color.blueF()));
+                lightIntensity.push_back(entity->lightSource->intensity);
+                lightRange.push_back(entity->lightSource->range);
             }
         }
 
@@ -419,9 +417,10 @@ void DeferredRenderer::passLights(Camera *camera)
         {
             if(lightPosition.length() > 0 && lightColors.length() > 0)
             {
-                qDebug() << "Sending light: " << lightPosition[0];
                 program.setUniformValueArray("lightPositions", &lightPosition[0], lightPosition.length());
                 program.setUniformValueArray("lightColors", &lightColors[0], lightColors.length());
+                program.setUniformValueArray("lightIntensity", &lightIntensity[0], lightIntensity.length(), 1);
+                program.setUniformValueArray("lightRange", &lightRange[0], lightRange.length(), 1);
             }
         }
 
