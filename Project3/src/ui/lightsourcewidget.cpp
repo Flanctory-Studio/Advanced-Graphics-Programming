@@ -22,7 +22,7 @@ LightSourceWidget::LightSourceWidget(QWidget *parent) : QWidget(parent)
     labelType->setMinimumSize(QSize(70, 10));
     comboType = new QComboBox;
     comboType->addItem("Point", QVariant::fromValue<int>((int)LightSource::Type::Point));
-    comboType->addItem("Directional", QVariant::fromValue<int>((int)LightSource::Type::Directional));
+    //comboType->addItem("Directional", QVariant::fromValue<int>((int)LightSource::Type::Directional));
     vlayout->addRow(labelType, comboType);
 
     auto labelColor = new QLabel("Color");
