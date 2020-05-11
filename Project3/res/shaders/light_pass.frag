@@ -43,6 +43,6 @@ void main()
         specular *= attenuation;
         lighting += diffuse + specular;
     }
-    outColor = vec4(lighting, 1.0);//texture(gNormal,TexCoords);
+    outColor = vec4(lighting, 1.0);
 
 }

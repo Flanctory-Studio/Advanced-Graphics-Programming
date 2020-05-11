@@ -392,6 +392,9 @@ void DeferredRenderer::passLights(Camera *camera)
 {
     OpenGLErrorGuard guard(__FUNCTION__);
 
+    gl->glDisable(GL_DEPTH_TEST);
+
+
     QOpenGLShaderProgram &program = deferredLight->program;
 
     if(program.bind())
@@ -414,26 +417,31 @@ void DeferredRenderer::passLights(Camera *camera)
         {
             if(lightPosition.length() > 0 && lightDirection.length() > 0)
             {
-                qDebug() << "aqgasdfgagaer";
                 program.setUniformValueArray("lightPosition", &lightPosition[0], lightPosition.length());
                 program.setUniformValueArray("lightDirection", &lightDirection[0], lightDirection.length());
             }
         }
-            QVector4D cameraPos;
-            cameraPos = camera->viewMatrix.row(3);
 
-             gl->glActiveTexture(GL_TEXTURE0);
-             gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
-             gl->glActiveTexture(GL_TEXTURE1);
-             gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
-             gl->glActiveTexture(GL_TEXTURE2);
-             gl->glBindTexture(GL_TEXTURE_2D, fboAlbedo);
+        program.setUniformValue("viewPos", camera->position);
+
+
+        program.setUniformValue("gPosition", 0);
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
+        program.setUniformValue("gNormal", 1);
+        gl->glActiveTexture(GL_TEXTURE1);
+        gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
+        program.setUniformValue("gAlbedoSpec", 2);
+        gl->glActiveTexture(GL_TEXTURE2);
+        gl->glBindTexture(GL_TEXTURE_2D, fboAlbedo);
 
         resourceManager->quad->submeshes[0]->draw();
 
 
         program.release();
     }
+
+        gl->glEnable(GL_DEPTH_TEST);
 }
 
 void DeferredRenderer::passBlit()
