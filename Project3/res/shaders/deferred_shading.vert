@@ -8,6 +8,7 @@ layout(location=4) in vec3 bitangent;
 
 uniform mat4 projectionMatrix;
 uniform mat4 worldViewMatrix;
+uniform bool selected;
 
 out vec2 vTexCoords;
 out vec3 vNormal;

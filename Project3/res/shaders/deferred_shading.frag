@@ -2,6 +2,7 @@
 
 uniform sampler2D albedoTexture;
 uniform sampler2D specularTexture;
+uniform bool selected;
 
 in vec2 vTexCoords;
 in vec3 vNormal;
