@@ -11,6 +11,9 @@ public:
     // TODO: Maybe not the best place for this stuff...
     QColor backgroundColor;
     bool renderLightSources = true;
+
+    bool useReliefMapping = false;
+    bool useDepthOfField = false;
 };
 
 #endif // MISCSETTINGS_H

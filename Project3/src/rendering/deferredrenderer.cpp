@@ -254,12 +254,17 @@ void DeferredRenderer::render(Camera *camera)
 
     // Passes
     passMeshes(camera);
+
+    if(miscSettings->useReliefMapping)
+    {
+        //TODO: APPLY RELIEF MAPPING EFFECT
+    }
+
     fboGeometry->release();
 
-
     gl->glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
     fboLight->bind();
+
     // Clear color
     gl->glClearDepth(1.0);
     gl->glClearColor(0.0, 0.0, 0.0,1.0);
@@ -267,6 +272,12 @@ void DeferredRenderer::render(Camera *camera)
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     passLights(camera);
+
+    if(miscSettings->useDepthOfField)
+    {
+        //TODO: APPLY DEPTH OF FIELD EFFECT
+    }
+
     fboLight->release();
 
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

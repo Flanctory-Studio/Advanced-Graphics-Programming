@@ -127,30 +127,52 @@
      <property name="title">
       <string>Rendering</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
-      <item>
-       <widget class="QCheckBox" name="forward">
-        <property name="text">
-         <string>Forward</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="deferred">
-        <property name="text">
-         <string>Deferred</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>TODO: Checkboxes for render techniques</string>
-        </property>
-       </widget>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0">
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>Rendering Pipeline</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="renderingPipeline">
+            <property name="currentIndex">
+             <number>1</number>
+            </property>
+            <item>
+             <property name="text">
+              <string>Forward</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Deferred</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="ReliefMapping">
+          <property name="text">
+           <string>Relief Mapping</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="DepthOfField">
+          <property name="text">
+           <string>Depth of Field</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>

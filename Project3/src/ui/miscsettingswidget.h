@@ -27,8 +27,11 @@ public slots:
     void onBackgroundColorClicked();
     void onVisualHintChanged();
 
-    void ForwardStateChange(int state);
-    void DeferredStateChange(int state);
+    void RenderingPipelineStateChanged(int state);
+
+    void ReliefMappingStateChange(int state);
+    void DepthOfFieldStateChange(int state);
+
 private:
     Ui::MiscSettingsWidget *ui;
 };

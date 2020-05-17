@@ -3,6 +3,7 @@
 #include "globals.h"
 #include <QColorDialog>
 
+#include <QDebug>
 
 MiscSettingsWidget::MiscSettingsWidget(QWidget *parent) :
     QWidget(parent),
@@ -20,52 +21,68 @@ MiscSettingsWidget::MiscSettingsWidget(QWidget *parent) :
     connect(ui->checkBoxLightSources, SIGNAL(clicked()), this, SLOT(onVisualHintChanged()));
     connect(ui->checkBoxSelectionOutline, SIGNAL(clicked()), this, SLOT(onVisualHintChanged()));
 
+    connect(ui->renderingPipeline, SIGNAL(currentIndexChanged(int)), this, SLOT(RenderingPipelineStateChanged(int)));
 
-    connect(ui->forward, SIGNAL(stateChanged(int)), this, SLOT(ForwardStateChange(int)));
-    connect(ui->deferred, SIGNAL(stateChanged(int)), this, SLOT(DeferredStateChange(int)));
-
+    connect(ui->ReliefMapping, SIGNAL(stateChanged(int)), this, SLOT(ReliefMappingStateChange(int)));
+    connect(ui->DepthOfField, SIGNAL(stateChanged(int)), this, SLOT(DepthOfFieldStateChange(int)));
 }
 
-void MiscSettingsWidget::ForwardStateChange(int state)
+void MiscSettingsWidget::RenderingPipelineStateChanged(int activeIndex)
 {
-    Qt::CheckState cheked = Qt::CheckState(state);
+    enum RenderingPipelines { ForwardRendering, DeferredRendering };
 
-    switch (cheked) {
-    case Qt::CheckState::Unchecked:
+    switch(activeIndex)
     {
-        // TODO: Use this state for rendering the scene
+        case RenderingPipelines::ForwardRendering:
+        {
+            qDebug("ForwardRendering selected");
+            break;
+        }
+        case RenderingPipelines::DeferredRendering:
+        {
+            qDebug("DeferredRendering selected");
+            break;
+        }
     }
-        break;
-    case Qt::CheckState::Checked:
-    {
-        ui->deferred->setCheckState(Qt::CheckState::Unchecked);
-    }
-        break;
-
-    default:
-        break;
-    }
-
 }
 
-void MiscSettingsWidget::DeferredStateChange(int state)
+void MiscSettingsWidget::ReliefMappingStateChange(int state)
 {
-    Qt::CheckState cheked = Qt::CheckState(state);
+    Qt::CheckState checked = Qt::CheckState(state);
 
-    switch (cheked) {
-    case Qt::CheckState::Unchecked:
+    switch(checked)
     {
-        // TODO: Use this state for rendering the scene
-    }
-        break;
-    case Qt::CheckState::Checked:
-    {
-        ui->forward->setCheckState(Qt::CheckState::Unchecked);
-    }
-        break;
+        case Qt::CheckState::Unchecked:
+        {
+            miscSettings->useReliefMapping = false;
+            break;
+        }
 
-    default:
-        break;
+        case Qt::CheckState::Checked:
+        {
+            miscSettings->useReliefMapping = true;
+            break;
+        }
+    }
+}
+
+void MiscSettingsWidget::DepthOfFieldStateChange(int state)
+{
+    Qt::CheckState checked = Qt::CheckState(state);
+
+    switch(checked)
+    {
+        case Qt::CheckState::Unchecked:
+        {
+            miscSettings->useDepthOfField = false;
+            break;
+        }
+
+        case Qt::CheckState::Checked:
+        {
+            miscSettings->useDepthOfField = true;
+            break;
+        }
     }
 }
 
