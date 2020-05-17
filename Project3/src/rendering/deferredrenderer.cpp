@@ -343,6 +343,8 @@ void DeferredRenderer::passMeshes(Camera *camera)
                     program.setUniformValue("smoothness", material->smoothness);
                     program.setUniformValue("bumpiness", material->bumpiness);
                     program.setUniformValue("tiling", material->tiling);
+                    program.setUniformValue("selected", selection->contains(meshRenderer->entity));
+
                     SEND_TEXTURE("albedoTexture", material->albedoTexture, resourceManager->texWhite, 0);
                     SEND_TEXTURE("emissiveTexture", material->emissiveTexture, resourceManager->texBlack, 1);
                     SEND_TEXTURE("specularTexture", material->specularTexture, resourceManager->texBlack, 2);

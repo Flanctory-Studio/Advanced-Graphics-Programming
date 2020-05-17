@@ -124,7 +124,6 @@ bool Interaction::navigate()
                                         0.0f,
                                         -sinf(qDegreesToRadians(yaw))) * a * t;
     }
-
     if (input->keys[Qt::Key_E] == KeyState::Pressed) // Up
     {
         accelerating = true;
@@ -132,7 +131,6 @@ bool Interaction::navigate()
                                  cosf(qDegreesToRadians(pitch)) * a * t,
                                  0.0f);
     }
-
     if (input->keys[Qt::Key_Q] == KeyState::Pressed) // Down
     {
         accelerating = true;

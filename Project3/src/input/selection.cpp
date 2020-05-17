@@ -29,6 +29,18 @@ void Selection::select(Entity *entity)
     emit entitySelected(entity);
 }
 
+bool Selection::contains(Entity* entity)
+{
+    for(int i = 0; i < count; ++i)
+    {
+        if(entities[i] == entity)
+            return true;
+    }
+
+    return false;
+}
+
+
 void Selection::onEntitySelectedFromEditor(Entity *entity)
 {
     if (entity != nullptr) {
