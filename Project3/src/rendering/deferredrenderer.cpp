@@ -162,12 +162,14 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
         GL_COLOR_ATTACHMENT0,
         GL_COLOR_ATTACHMENT1,
         GL_COLOR_ATTACHMENT2,
+        GL_COLOR_ATTACHMENT3,
     };
-    gl->glDrawBuffers(3, buffs);
+    gl->glDrawBuffers(4, buffs);
 
     fboGeometry->addColorAttachment(0, fboPosition);
     fboGeometry->addColorAttachment(1, fboNormal);
     fboGeometry->addColorAttachment(2, fboAlbedo);
+    fboGeometry->addColorAttachment(3, fboSelection);
     fboGeometry->addDepthAttachment(fboDepth);
     fboGeometry->checkStatus();
     fboGeometry->release();
@@ -312,12 +314,15 @@ void DeferredRenderer::passMeshes(Camera *camera)
         }
 
         // Meshes
-        for (auto meshRenderer : meshRenderers)
+        for (int i = 0; i < meshRenderers.size(); ++i)
         {
+            auto meshRenderer = meshRenderers[i];
             auto mesh = meshRenderer->mesh;
 
             if (mesh != nullptr)
             {
+                float percent = i / meshRenderers.size();
+
                 QMatrix4x4 worldMatrix = meshRenderer->entity->transform->matrix();
                 QMatrix4x4 worldViewMatrix = camera->viewMatrix * worldMatrix;
                 QMatrix3x3 normalMatrix = worldViewMatrix.normalMatrix();
@@ -339,13 +344,13 @@ void DeferredRenderer::passMeshes(Camera *camera)
                     }
                     materialIndex++;
 
-#define SEND_TEXTURE(uniformName, tex1, tex2, texUnit) \
-    program.setUniformValue(uniformName, texUnit); \
-    if (tex1 != nullptr) { \
-    tex1->bind(texUnit); \
-                } else { \
-    tex2->bind(texUnit); \
-                }
+                    #define SEND_TEXTURE(uniformName, tex1, tex2, texUnit) \
+                        program.setUniformValue(uniformName, texUnit); \
+                        if (tex1 != nullptr) { \
+                        tex1->bind(texUnit); \
+                                    } else { \
+                        tex2->bind(texUnit); \
+                        }
 
                     // Send the material to the shader
                     program.setUniformValue("albedo", material->albedo);
@@ -355,6 +360,8 @@ void DeferredRenderer::passMeshes(Camera *camera)
                     program.setUniformValue("bumpiness", material->bumpiness);
                     program.setUniformValue("tiling", material->tiling);
                     program.setUniformValue("selected", selection->contains(meshRenderer->entity));
+
+                    program.setUniformValue("selectionColor", QColor(percent * 255, percent * 255, percent * 255));
 
                     SEND_TEXTURE("albedoTexture", material->albedoTexture, resourceManager->texWhite, 0);
                     SEND_TEXTURE("emissiveTexture", material->emissiveTexture, resourceManager->texBlack, 1);
@@ -440,7 +447,6 @@ void DeferredRenderer::passLights(Camera *camera)
         program.setUniformValue("viewPos", camera->position);
         program.setUniformValue("backgroundColor", QVector3D(miscSettings->backgroundColor.redF(), miscSettings->backgroundColor.greenF(), miscSettings->backgroundColor.blueF()));
 
-
         program.setUniformValue("gPosition", 0);
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
@@ -452,7 +458,6 @@ void DeferredRenderer::passLights(Camera *camera)
         gl->glBindTexture(GL_TEXTURE_2D, fboAlbedo);
 
         resourceManager->quad->submeshes[0]->draw();
-
 
         program.release();
     }
