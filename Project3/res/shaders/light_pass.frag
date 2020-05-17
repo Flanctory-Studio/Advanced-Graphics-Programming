@@ -17,6 +17,7 @@ float linear = 0.7;
 float quadratic = 1.8;
 
 uniform vec3 viewPos;
+uniform vec3 backgroundColor;
 
 void main()
 {
@@ -26,7 +27,7 @@ void main()
     vec3 Diffuse = texture(gAlbedoSpec, TexCoords).rgb;
     float Specular = texture(gAlbedoSpec, TexCoords).a;
 
-    vec3 lighting = vec3(0.1568);
+    vec3 lighting = backgroundColor;
 
     if (length(Normal) >= 0.9 && length(Normal) <= 1.1)
     {    // then calculate lighting as usual

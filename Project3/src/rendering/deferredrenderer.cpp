@@ -425,6 +425,7 @@ void DeferredRenderer::passLights(Camera *camera)
         }
 
         program.setUniformValue("viewPos", camera->position);
+        program.setUniformValue("backgroundColor", QVector3D(miscSettings->backgroundColor.redF(), miscSettings->backgroundColor.greenF(), miscSettings->backgroundColor.blueF()));
 
 
         program.setUniformValue("gPosition", 0);
