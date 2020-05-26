@@ -21,5 +21,5 @@ void main(void)
     outAlbedo.rgb = texture(albedoTexture, vTexCoords).rgb;
     outAlbedo.a = texture(specularTexture, vTexCoords).r;
 
-    outSelection = selectedColor;
+    outSelection = selectionColor;
 }
