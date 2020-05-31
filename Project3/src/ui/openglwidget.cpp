@@ -52,6 +52,7 @@ OpenGLWidget::OpenGLWidget(QWidget *parent)
     ::camera = camera;
     ::interaction = interaction;
     ::selection = selection;
+    ::renderer = renderer;
 }
 
 OpenGLWidget::~OpenGLWidget()

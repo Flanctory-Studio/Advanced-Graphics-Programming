@@ -6,5 +6,6 @@ Scene *scene = nullptr;
 Input *input = nullptr;
 Interaction *interaction = nullptr;
 Selection *selection = nullptr;
+Renderer* renderer = nullptr;
 MiscSettings *miscSettings = nullptr;
 QString projectDirectory;

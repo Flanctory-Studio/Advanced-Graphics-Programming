@@ -58,6 +58,8 @@ DeferredRenderer::DeferredRenderer() :
     addTexture("Normals");
     addTexture("Albedo");
     addTexture("Depth");
+
+    rendererType = RendererType::DEFERRED;
 }
 
 DeferredRenderer::~DeferredRenderer()
@@ -110,7 +112,7 @@ void DeferredRenderer::finalize()
 
 void DeferredRenderer::GenerateGeometryFBO(int w, int h)
 {
-    if (fboPosition == 0) gl->glDeleteTextures(1, &fboPosition);
+    if (fboPosition != 0) gl->glDeleteTextures(1, &fboPosition);
     gl->glGenTextures(1, &fboPosition);
     gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -120,7 +122,7 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
-    if (fboNormal == 0) gl->glDeleteTextures(1, &fboNormal);
+    if (fboNormal != 0) gl->glDeleteTextures(1, &fboNormal);
     gl->glGenTextures(1, &fboNormal);
     gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -130,7 +132,7 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
-    if (fboAlbedo == 0) gl->glDeleteTextures(1, &fboAlbedo);
+    if (fboAlbedo != 0) gl->glDeleteTextures(1, &fboAlbedo);
     gl->glGenTextures(1, &fboAlbedo);
     gl->glBindTexture(GL_TEXTURE_2D, fboAlbedo);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -140,9 +142,19 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
-    if (fboDepth == 0) gl->glDeleteTextures(1, &fboDepth);
+    if (fboDepth != 0) gl->glDeleteTextures(1, &fboDepth);
     gl->glGenTextures(1, &fboDepth);
     gl->glBindTexture(GL_TEXTURE_2D, fboDepth);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+
+    if (selectionTexture != 0) gl->glDeleteTextures(1, &selectionTexture);
+    gl->glGenTextures(1, &selectionTexture);
+    gl->glBindTexture(GL_TEXTURE_2D, selectionTexture);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -169,7 +181,7 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
     fboGeometry->addColorAttachment(0, fboPosition);
     fboGeometry->addColorAttachment(1, fboNormal);
     fboGeometry->addColorAttachment(2, fboAlbedo);
-    fboGeometry->addColorAttachment(3, fboSelection);
+    fboGeometry->addColorAttachment(3, selectionTexture);
     fboGeometry->addDepthAttachment(fboDepth);
     fboGeometry->checkStatus();
     fboGeometry->release();

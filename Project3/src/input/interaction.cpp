@@ -3,7 +3,7 @@
 #include "resources/mesh.h"
 #include <QtMath>
 #include <QVector2D>
-
+#include "rendering/deferredrenderer.h"
 
 bool Interaction::update()
 {
@@ -35,7 +35,25 @@ bool Interaction::idle()
     }
     else if (input->mouseButtons[Qt::LeftButton] == MouseButtonState::Press)
     {
-        // TODO: Left click
+        //Select entities
+
+        //Relative to the opengl widget. x > 0 => Right, y > 0 => Down
+        QVector2D mousePosition(input->mousex, input->mousey);
+
+        //Get the selection texture
+        if(renderer->rendererType == Renderer::RendererType::DEFERRED)
+        {
+            DeferredRenderer* deferredRenderer = (DeferredRenderer*) renderer;
+            gl->glBindTexture(GL_TEXTURE_2D, deferredRenderer->selectionTexture);
+
+            //TODO:
+            //Obtain the pixels
+            //Get the pixel color related with the mouse position
+            //With the color extract the selected entity
+            //Select the entity with the selection object in globals.h
+
+            gl->glBindTexture(GL_TEXTURE_2D, NULL);
+        }
     }
     else if(selection->count > 0)
     {

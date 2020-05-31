@@ -8,6 +8,7 @@
 #include "input/interaction.h"
 #include "input/selection.h"
 #include "rendering/miscsettings.h"
+#include "rendering/renderer.h"
 #include <QString>
 
 extern ResourceManager *resourceManager;
@@ -17,6 +18,7 @@ extern Input *input;
 extern Interaction *interaction;
 extern Selection *selection;
 extern MiscSettings *miscSettings;
+extern Renderer* renderer;
 
 extern QString projectDirectory;
 

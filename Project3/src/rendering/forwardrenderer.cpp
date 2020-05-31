@@ -54,6 +54,8 @@ ForwardRenderer::ForwardRenderer() :
     addTexture("Final render");
     addTexture("White");
     addTexture("Black"); // WIP
+
+    rendererType = RendererType::FORWARD;
 }
 
 ForwardRenderer::~ForwardRenderer()

@@ -9,6 +9,9 @@ class Camera;
 class Renderer
 {
 public:
+    enum RendererType {FORWARD, DEFERRED};
+
+public:
     Renderer() { }
     virtual ~Renderer() { }
 
@@ -21,6 +24,8 @@ public:
     QVector<QString> getTextures() const;
     void showTexture(QString textureName);
     QString shownTexture() const;
+
+    RendererType rendererType = RendererType::FORWARD;
 
 protected:
 
