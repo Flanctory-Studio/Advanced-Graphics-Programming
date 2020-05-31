@@ -13,6 +13,8 @@ HierarchyWidget::HierarchyWidget(QWidget *parent) :
     connect(ui->duplicateButton, SIGNAL(clicked()), this, SLOT(duplicateEntity()));
     connect(ui->removeButton, SIGNAL(clicked()), this, SLOT(removeEntity()));
     connect(ui->listWidget, SIGNAL(itemClicked(QListWidgetItem *)), this, SLOT(onItemClicked(QListWidgetItem *)));
+
+    connect(selection, SIGNAL(entitySelected(Entity*)), this, SLOT(onEntitySelected(Entity*)));
 }
 
 HierarchyWidget::~HierarchyWidget()
@@ -67,5 +69,17 @@ void HierarchyWidget::onItemClicked(QListWidgetItem *)
     {
         Entity *entity = scene->entityAt(index);
         emit entitySelected(entity);
+    }
+}
+
+void HierarchyWidget::onEntitySelected(Entity* entity)
+{
+    for(int i = 0; i < scene->entities.size(); ++i)
+    {
+        if(scene->entities[i] == entity)
+        {
+            ui->listWidget->setCurrentRow(i);
+            break;
+        }
     }
 }

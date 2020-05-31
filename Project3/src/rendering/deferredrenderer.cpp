@@ -15,7 +15,6 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
 
-
 static void sendLightsToProgram(QOpenGLShaderProgram &program, const QMatrix4x4 &viewMatrix)
 {
     QVector<int> lightType;
@@ -47,7 +46,8 @@ static void sendLightsToProgram(QOpenGLShaderProgram &program, const QMatrix4x4 
 DeferredRenderer::DeferredRenderer() :
     fboPosition(QOpenGLTexture::Target2D),
     fboFinal(QOpenGLTexture::Target2D),
-    fboDepth(QOpenGLTexture::Target2D)
+    fboDepth(QOpenGLTexture::Target2D),
+    selectionTexture(QOpenGLTexture::Target2D)
 {
     fboGeometry = nullptr;
     fboLight = nullptr;
@@ -58,6 +58,7 @@ DeferredRenderer::DeferredRenderer() :
     addTexture("Normals");
     addTexture("Albedo");
     addTexture("Depth");
+    addTexture("Selection");
 
     rendererType = RendererType::DEFERRED;
 }
@@ -253,6 +254,9 @@ void DeferredRenderer::resize(int w, int h)
 
     // fbo Light
     GenerateLightFBO(w, h);
+
+    width = w;
+    height = h;
 }
 
 void DeferredRenderer::render(Camera *camera)
@@ -297,6 +301,20 @@ void DeferredRenderer::render(Camera *camera)
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     passBlit();
+
+    //Storage the new selection texture pixels
+
+    fboGeometry->bind();
+
+    gl->glReadBuffer(GL_COLOR_ATTACHMENT0 + 3);
+
+    int pixelsSize = width * height;
+    selectionPixels.resize(pixelsSize);
+
+    gl->glReadPixels(0, 0, width, height, GL_RED, GL_FLOAT, selectionPixels.data());
+
+    gl->glReadBuffer(0);
+    fboGeometry->release();
 }
 
 void DeferredRenderer::passMeshes(Camera *camera)
@@ -328,13 +346,13 @@ void DeferredRenderer::passMeshes(Camera *camera)
         // Meshes
         for (int i = 0; i < meshRenderers.size(); ++i)
         {
+            float percent = (i + 1.0f) / meshRenderers.size();
+
             auto meshRenderer = meshRenderers[i];
             auto mesh = meshRenderer->mesh;
 
             if (mesh != nullptr)
             {
-                float percent = i / meshRenderers.size();
-
                 QMatrix4x4 worldMatrix = meshRenderer->entity->transform->matrix();
                 QMatrix4x4 worldViewMatrix = camera->viewMatrix * worldMatrix;
                 QMatrix3x3 normalMatrix = worldViewMatrix.normalMatrix();
@@ -373,7 +391,7 @@ void DeferredRenderer::passMeshes(Camera *camera)
                     program.setUniformValue("tiling", material->tiling);
                     program.setUniformValue("selected", selection->contains(meshRenderer->entity));
 
-                    program.setUniformValue("selectionColor", QColor(percent * 255, percent * 255, percent * 255));
+                    program.setUniformValue("selectionColor", percent);
 
                     SEND_TEXTURE("albedoTexture", material->albedoTexture, resourceManager->texWhite, 0);
                     SEND_TEXTURE("emissiveTexture", material->emissiveTexture, resourceManager->texBlack, 1);
@@ -504,6 +522,9 @@ void DeferredRenderer::passBlit()
         else if (shownTexture() == "Depth") {
             gl->glBindTexture(GL_TEXTURE_2D, fboDepth);
         }
+        else if(shownTexture() == "Selection") {
+            gl->glBindTexture(GL_TEXTURE_2D, selectionTexture);
+        }
 
         resourceManager->quad->submeshes[0]->draw();
         program.release();
@@ -512,3 +533,4 @@ void DeferredRenderer::passBlit()
     gl->glBindTexture(GL_TEXTURE_2D, 0);
     gl->glEnable(GL_DEPTH_TEST);
 }
+

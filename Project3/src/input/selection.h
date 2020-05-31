@@ -22,7 +22,6 @@ public:
     Entity *entities[MAX_SELECTED_ENTITIES] = {};
 
 signals:
-
     void entitySelected(Entity *);
 
 public slots:

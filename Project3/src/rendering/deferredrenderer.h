@@ -40,11 +40,14 @@ private:
     GLuint fboAlbedo = 0;
     GLuint fboFinal = 0;
     GLuint fboDepth = 0;
+    GLuint selectionTexture = 0;
+
     FramebufferObject *fboGeometry = nullptr;
     FramebufferObject *fboLight = nullptr;
 
 public:
-     GLuint selectionTexture = 0;
+     int width = 0;
+     int height = 0;
 };
 
 #endif // DEFERREDRENDERER_H

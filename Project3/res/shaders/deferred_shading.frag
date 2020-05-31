@@ -3,7 +3,7 @@
 uniform sampler2D albedoTexture;
 uniform sampler2D specularTexture;
 uniform bool selected;
-uniform vec4 selectionColor;
+uniform float selectionColor;
 
 in vec2 vTexCoords;
 in vec3 vNormal;
@@ -21,5 +21,5 @@ void main(void)
     outAlbedo.rgb = texture(albedoTexture, vTexCoords).rgb;
     outAlbedo.a = texture(specularTexture, vTexCoords).r;
 
-    outSelection = selectionColor;
+    outSelection = vec4(selectionColor);
 }

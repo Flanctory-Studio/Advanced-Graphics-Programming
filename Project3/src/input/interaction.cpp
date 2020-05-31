@@ -4,6 +4,7 @@
 #include <QtMath>
 #include <QVector2D>
 #include "rendering/deferredrenderer.h"
+#include "../rendering/framebufferobject.h"
 
 bool Interaction::update()
 {
@@ -29,6 +30,8 @@ bool Interaction::update()
 
 bool Interaction::idle()
 {
+    //OpenGLErrorGuard guard(__FUNCTION__);
+
     if (input->mouseButtons[Qt::RightButton] == MouseButtonState::Pressed)
     {
         nextState = State::Navigating;
@@ -37,22 +40,43 @@ bool Interaction::idle()
     {
         //Select entities
 
-        //Relative to the opengl widget. x > 0 => Right, y > 0 => Down
-        QVector2D mousePosition(input->mousex, input->mousey);
-
-        //Get the selection texture
+        //Get the selection texture pixels
         if(renderer->rendererType == Renderer::RendererType::DEFERRED)
         {
             DeferredRenderer* deferredRenderer = (DeferredRenderer*) renderer;
-            gl->glBindTexture(GL_TEXTURE_2D, deferredRenderer->selectionTexture);
+            if(deferredRenderer->selectionPixels.empty())
+                return false;
 
-            //TODO:
-            //Obtain the pixels
-            //Get the pixel color related with the mouse position
-            //With the color extract the selected entity
-            //Select the entity with the selection object in globals.h
+            //Relative to the opengl widget. x > 0 => Right, y > 0 => Down
+            QVector2D mousePosition(input->mousex, input->mousey);
 
-            gl->glBindTexture(GL_TEXTURE_2D, NULL);
+            //Get all the meshRenderers in the scene
+            QVector<MeshRenderer*> meshRenderers;
+            for (auto entity : scene->entities)
+            {
+                if (entity->active)
+                {
+                    if (entity->meshRenderer != nullptr) { meshRenderers.push_back(entity->meshRenderer); }
+                }
+            }
+
+            //Convert from QT coordinates to OpenGL pixel coordinates (origin top-left to origin bottom-left)
+            QVector2D mousePixelPosition(mousePosition.x(), deferredRenderer->height - mousePosition.y());
+
+            //Extract the value stored in the texture
+            float percent = deferredRenderer->selectionPixels[mousePixelPosition.x() + deferredRenderer->width * mousePixelPosition.y()];
+
+            //Calculate the index of the selected entity
+            int index = qRound((percent * meshRenderers.size()) - 1.0f);
+            if(index >= 0)
+            {
+                Entity* selectedEntity = index >= meshRenderers.size() ? nullptr : meshRenderers[index]->entity;
+
+                //Select the entity
+                selection->select(selectedEntity);
+            }
+            else
+                selection->select(nullptr);
         }
     }
     else if(selection->count > 0)

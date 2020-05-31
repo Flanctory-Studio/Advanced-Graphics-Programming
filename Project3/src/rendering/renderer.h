@@ -26,9 +26,9 @@ public:
     QString shownTexture() const;
 
     RendererType rendererType = RendererType::FORWARD;
+    QVector<float> selectionPixels;
 
 protected:
-
     void addTexture(QString textureName);
     QVector<QString> textures;
     QString m_shownTexture;
