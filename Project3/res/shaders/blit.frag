@@ -1,8 +1,12 @@
 #version 330 core
 
 uniform sampler2D colorTexture;
+uniform sampler2D outlineTexture;
 uniform bool blitAlpha;
 uniform bool blitDepth;
+uniform float outlineElement;
+uniform float outlineWidth;
+uniform vec3 outlineColor;
 
 in vec2 texCoord;
 
@@ -11,6 +15,32 @@ out vec4 outColor;
 void main(void)
 {
     vec4 texel = texture(colorTexture, texCoord);
+
+    // if the pixel is outlineElement (we are on the silhouette)
+    if (texture(outlineTexture, texCoord).xyz == vec3(outlineElement))
+        {
+            vec2 size = 1.0f / textureSize(outlineTexture, 0);
+
+            for (int i = -1; i <= +1; i++)
+            {
+                for (int j = -1; j <= +1; j++)
+                {
+                    if (i == 0 && j == 0)
+                    {
+                        continue;
+                    }
+
+                    vec2 offset = vec2(i, j) * size * outlineWidth;
+
+                    // If one of the neighboring pixels is different to outlineElement (we are on the border)
+                    if (texture(outlineTexture, texCoord + offset).xyz != vec3(outlineElement))
+                    {
+                        texel = vec4(outlineColor, 1.0f);
+                    }
+                }
+            }
+        }
+
 
     if (blitAlpha) {
         outColor.rgb = vec3(texel.a);
