@@ -25,12 +25,16 @@ public slots:
     void onCameraFovYChanged(double speed);
     void onMaxSubmeshesChanged(int n);
     void onBackgroundColorClicked();
+    void onOutlineColorClicked();
     void onVisualHintChanged();
 
     void RenderingPipelineStateChanged(int state);
 
     void ReliefMappingStateChange(int state);
     void DepthOfFieldStateChange(int state);
+
+private slots:
+    void on_buttonBackgroundColor_clicked();
 
 private:
     Ui::MiscSettingsWidget *ui;

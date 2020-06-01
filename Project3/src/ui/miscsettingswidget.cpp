@@ -17,6 +17,7 @@ MiscSettingsWidget::MiscSettingsWidget(QWidget *parent) :
     connect(ui->spinCameraSpeed, SIGNAL(valueChanged(double)), this, SLOT(onCameraSpeedChanged(double)));
     connect(ui->spinFovY, SIGNAL(valueChanged(double)), this, SLOT(onCameraFovYChanged(double)));
     connect(ui->buttonBackgroundColor, SIGNAL(clicked()), this, SLOT(onBackgroundColorClicked()));
+    connect(ui->buttonOutlineColor, SIGNAL(clicked()), this, SLOT(onOutlineColorClicked()));
     connect(ui->checkBoxGrid, SIGNAL(clicked()), this, SLOT(onVisualHintChanged()));
     connect(ui->checkBoxLightSources, SIGNAL(clicked()), this, SLOT(onVisualHintChanged()));
     connect(ui->checkBoxSelectionOutline, SIGNAL(clicked()), this, SLOT(onVisualHintChanged()));
@@ -123,8 +124,25 @@ void MiscSettingsWidget::onBackgroundColorClicked()
     }
 }
 
+void MiscSettingsWidget::onOutlineColorClicked()
+{
+    QColor color = QColorDialog::getColor(miscSettings->outlineColor, this, "Outline color");
+    if (color.isValid())
+    {
+        QString colorName = color.name();
+        ui->buttonBackgroundColor->setStyleSheet(QString::fromLatin1("outline-color: %0").arg(colorName));
+        miscSettings->outlineColor = color;
+        emit settingsChanged();
+    }
+}
+
 void MiscSettingsWidget::onVisualHintChanged()
 {
     miscSettings->renderLightSources = ui->checkBoxLightSources->isChecked();
     emit settingsChanged();
+}
+
+void MiscSettingsWidget::on_buttonBackgroundColor_clicked()
+{
+
 }
