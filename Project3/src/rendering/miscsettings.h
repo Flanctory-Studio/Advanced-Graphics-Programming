@@ -9,6 +9,7 @@ public:
     MiscSettings();
 
     // TODO: Maybe not the best place for this stuff...
+    bool renderGrid = true;
     QColor backgroundColor;
     QColor outlineColor;
     bool renderLightSources = true;
