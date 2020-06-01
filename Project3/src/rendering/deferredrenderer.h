@@ -28,10 +28,12 @@ private:
 
     void passLights(Camera *camera);
     void passMeshes(Camera *camera);
+    void passGrid(Camera *camera);
     void passBlit();
 
     // Shaders
     ShaderProgram *deferredGeometry = nullptr;
+    ShaderProgram *gridProgram = nullptr;
     ShaderProgram *blitProgram = nullptr;
     ShaderProgram *deferredLight = nullptr;
 

@@ -93,6 +93,12 @@ void DeferredRenderer::initialize()
     blitProgram->fragmentShaderFilename = "res/shaders/blit.frag";
     blitProgram->includeForSerialization = false;
 
+   gridProgram = resourceManager->createShaderProgram();
+   gridProgram->name = "Grid Program";
+   gridProgram->vertexShaderFilename = "res/shaders/grid.vert";
+   gridProgram->fragmentShaderFilename = "res/shaders/grid.frag";
+   gridProgram->includeForSerialization = false;
+
     // Create FBO
 
     fboGeometry = new FramebufferObject();
@@ -264,6 +270,9 @@ void DeferredRenderer::render(Camera *camera)
     OpenGLErrorGuard guard(__FUNCTION__);
 
     fboGeometry->bind();
+
+    //Grid
+    //passGrid(camera);
 
     // Clear color
     gl->glClearDepth(1.0);
@@ -533,4 +542,51 @@ void DeferredRenderer::passBlit()
     gl->glBindTexture(GL_TEXTURE_2D, 0);
     gl->glEnable(GL_DEPTH_TEST);
 }
+
+void DeferredRenderer::passGrid(Camera *camera)
+{
+
+    if(miscSettings->renderGrid == false) return;
+
+    GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT3 };
+    gl->glDrawBuffers(1, drawBuffers);
+
+    OpenGLState state;
+    state.depthTest = true;
+    state.blending = true;
+    state.blendFuncSrc = GL_SRC_ALPHA;
+    state.blendFuncDst = GL_ONE_MINUS_SRC_ALPHA;
+    state.apply();
+
+    QOpenGLShaderProgram &program = gridProgram->program;
+
+    if(program.bind())
+    {
+        QVector4D cameraParameters = camera->getLeftRightBottomTop();
+        program.setUniformValue("left", cameraParameters.x());
+        program.setUniformValue("right", cameraParameters.y());
+        program.setUniformValue("bottoa", cameraParameters.z());
+        program.setUniformValue("top", cameraParameters.w());
+        program.setUniformValue("znear", camera->znear);
+
+        program.setUniformValue("worldMatrix", camera->worldMatrix);
+        program.setUniformValue("viewlatrix", camera->viewMatrix);
+
+        program.setUniformValue("projectionMatrix", camera->projectionMatrix) ;
+
+        resourceManager->quad->submeshes[0]->draw();
+
+        program.release();
+    }
+}
+
+
+
+
+
+
+
+
+
+
 
