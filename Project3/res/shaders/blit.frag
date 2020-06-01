@@ -12,12 +12,17 @@ in vec2 texCoord;
 
 out vec4 outColor;
 
+const float eps = 0.0001;
+
+
 void main(void)
 {
     vec4 texel = texture(colorTexture, texCoord);
 
-    // if the pixel is outlineElement (we are on the silhouette)
-    if (texture(outlineTexture, texCoord).xyz == vec3(outlineElement))
+    // we have a element selected
+    if (outlineElement >= 0.0)
+    {    // if the pixel is outlineElement (we are on the silhouette)
+    if (abs(texture(outlineTexture, texCoord).x - (outlineElement)) < eps)
         {
             vec2 size = 1.0f / textureSize(outlineTexture, 0);
 
@@ -33,13 +38,14 @@ void main(void)
                     vec2 offset = vec2(i, j) * size * outlineWidth;
 
                     // If one of the neighboring pixels is different to outlineElement (we are on the border)
-                    if (texture(outlineTexture, texCoord + offset).xyz != vec3(outlineElement))
+                    if (abs(texture(outlineTexture, texCoord + offset).x - (outlineElement)) > eps)
                     {
                         texel = vec4(outlineColor, 1.0f);
                     }
                 }
             }
         }
+    }
 
 
     if (blitAlpha) {

@@ -74,9 +74,14 @@ bool Interaction::idle()
 
                 //Select the entity
                 selection->select(selectedEntity);
+
+                deferredRenderer->selectedColor = percent;
             }
             else
+            {
                 selection->select(nullptr);
+                deferredRenderer->selectedColor = -1.0;
+            }
         }
     }
     else if(selection->count > 0)

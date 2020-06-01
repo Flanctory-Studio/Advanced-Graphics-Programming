@@ -48,6 +48,8 @@ private:
 public:
      int width = 0;
      int height = 0;
+
+     float selectedColor = 0.0;
 };
 
 #endif // DEFERREDRENDERER_H
