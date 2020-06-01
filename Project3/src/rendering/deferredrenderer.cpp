@@ -59,6 +59,7 @@ DeferredRenderer::DeferredRenderer() :
     addTexture("Albedo");
     addTexture("Depth");
     addTexture("Selection");
+    addTexture("Outline");
 
     rendererType = RendererType::DEFERRED;
 }
@@ -67,6 +68,7 @@ DeferredRenderer::~DeferredRenderer()
 {
     delete fboGeometry;
     delete fboLight;
+    delete fboOutline;
 }
 
 void DeferredRenderer::initialize()
@@ -74,12 +76,17 @@ void DeferredRenderer::initialize()
     OpenGLErrorGuard guard(__FUNCTION__);
 
     // Create programs
-
     deferredGeometry = resourceManager->createShaderProgram();
     deferredGeometry->name = "Deferred Geometry";
     deferredGeometry->vertexShaderFilename = "res/shaders/deferred_shading.vert";
     deferredGeometry->fragmentShaderFilename = "res/shaders/deferred_shading.frag";
     deferredGeometry->includeForSerialization = false;
+
+    outlineGeometry = resourceManager->createShaderProgram();
+    outlineGeometry->name = "Outline";
+    outlineGeometry->vertexShaderFilename = "res/shaders/outline.vert";
+    outlineGeometry->fragmentShaderFilename = "res/shaders/outline.frag";
+    outlineGeometry->includeForSerialization = false;
 
     deferredLight = resourceManager->createShaderProgram();
     deferredLight->name = "Deferred Light";
@@ -100,6 +107,9 @@ void DeferredRenderer::initialize()
 
     fboLight = new FramebufferObject();
     fboLight->create();
+
+    fboOutline = new FramebufferObject();
+    fboOutline->create();
 }
 
 void DeferredRenderer::finalize()
@@ -109,6 +119,9 @@ void DeferredRenderer::finalize()
 
     fboLight->destroy();
     delete fboLight;
+
+    fboOutline->destroy();
+    delete fboOutline;
 }
 
 void DeferredRenderer::GenerateGeometryFBO(int w, int h)
@@ -175,7 +188,7 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
         GL_COLOR_ATTACHMENT0,
         GL_COLOR_ATTACHMENT1,
         GL_COLOR_ATTACHMENT2,
-        GL_COLOR_ATTACHMENT3,
+        GL_COLOR_ATTACHMENT3
     };
     gl->glDrawBuffers(4, buffs);
 
@@ -243,6 +256,35 @@ void DeferredRenderer::GenerateLightFBO(int w, int h)
     fboLight->release();
 }
 
+void DeferredRenderer::GenerateOutlineFBO(int w, int h)
+{
+    if (outlineTexture != 0) gl->glDeleteTextures(1, &outlineTexture);
+    gl->glGenTextures(1, &outlineTexture);
+    gl->glBindTexture(GL_TEXTURE_2D, outlineTexture);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+    glBindTexture(GL_TEXTURE_2D,0);
+
+    // Attach textures to the fbo
+    fboOutline->bind();
+
+    // Draw on selected buffers
+    GLenum buffs[]=
+    {
+        GL_COLOR_ATTACHMENT0
+    };
+    gl->glDrawBuffers(1, buffs);
+
+    fboOutline->addColorAttachment(0, outlineTexture);
+    fboOutline->checkStatus();
+    fboOutline->release();
+}
+
 void DeferredRenderer::resize(int w, int h)
 {
     OpenGLErrorGuard guard(__FUNCTION__);
@@ -254,6 +296,9 @@ void DeferredRenderer::resize(int w, int h)
 
     // fbo Light
     GenerateLightFBO(w, h);
+
+    // fbo Outline
+    GenerateOutlineFBO(w, h);
 
     width = w;
     height = h;
@@ -280,7 +325,20 @@ void DeferredRenderer::render(Camera *camera)
 
     fboGeometry->release();
 
-    gl->glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    fboOutline->bind();
+
+    // Clear color
+    gl->glClearDepth(1.0);
+    gl->glClearColor(0.0, 0.0, 0.0,1.0);
+    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Passes
+    passOutline(camera);
+
+    fboOutline->release();
+
+
     fboLight->bind();
 
     // Clear color
@@ -389,7 +447,6 @@ void DeferredRenderer::passMeshes(Camera *camera)
                     program.setUniformValue("smoothness", material->smoothness);
                     program.setUniformValue("bumpiness", material->bumpiness);
                     program.setUniformValue("tiling", material->tiling);
-                    program.setUniformValue("selected", selection->contains(meshRenderer->entity));
 
                     program.setUniformValue("selectionColor", percent);
 
@@ -432,6 +489,60 @@ void DeferredRenderer::passMeshes(Camera *camera)
         program.release();
     }
 }
+
+void DeferredRenderer::passOutline(Camera *camera)
+{
+    OpenGLErrorGuard guard(__FUNCTION__);
+
+    QOpenGLShaderProgram &program = outlineGeometry->program;
+
+    if (program.bind())
+    {
+        program.setUniformValue("viewMatrix", camera->viewMatrix);
+        program.setUniformValue("projectionMatrix", camera->projectionMatrix);
+
+        sendLightsToProgram(program, camera->viewMatrix);
+
+        QList<Entity*> entities = selection->GetEntities();
+        QVector<MeshRenderer*> meshRenderers;
+
+        // Get components
+        for (int i = 0; i < entities.size(); ++i) {
+            if (entities.at(i)->active)
+            {
+                if (entities.at(i)->meshRenderer != nullptr) { meshRenderers.push_back(entities.at(i)->meshRenderer); }
+            }
+        }
+
+        // Meshes
+        for (int i = 0; i < meshRenderers.size(); ++i)
+        {
+
+            auto meshRenderer = meshRenderers[i];
+            auto mesh = meshRenderer->mesh;
+
+            if (mesh != nullptr)
+            {
+                QMatrix4x4 worldMatrix = meshRenderer->entity->transform->matrix();
+                QMatrix4x4 worldViewMatrix = camera->viewMatrix * worldMatrix;
+                QMatrix3x3 normalMatrix = worldViewMatrix.normalMatrix();
+
+                program.setUniformValue("worldMatrix", worldMatrix);
+                program.setUniformValue("worldViewMatrix", worldViewMatrix);
+                program.setUniformValue("normalMatrix", normalMatrix);
+
+                for (auto submesh : mesh->submeshes)
+                {
+                    if (selection->contains(meshRenderer->entity))
+                        submesh->draw();
+                }
+            }
+        }
+
+        program.release();
+    }
+}
+
 
 void DeferredRenderer::passLights(Camera *camera)
 {
@@ -525,13 +636,15 @@ void DeferredRenderer::passBlit()
         else if(shownTexture() == "Selection") {
             gl->glBindTexture(GL_TEXTURE_2D, selectionTexture);
         }
+        else if(shownTexture() == "Outline") {
+            gl->glBindTexture(GL_TEXTURE_2D, outlineTexture);
+        }
 
         program.setUniformValue("outlineTexture", 1);
         gl->glActiveTexture(GL_TEXTURE1);
-        gl->glBindTexture(GL_TEXTURE_2D, selectionTexture);
+        gl->glBindTexture(GL_TEXTURE_2D, outlineTexture);
         program.setUniformValue("outlineColor", QVector3D(1.0f, 0.0f, 0.0f));
         program.setUniformValue("outlineWidth", 2.0f);
-        program.setUniformValue("outlineElement", selectedColor);
 
         resourceManager->quad->submeshes[0]->draw();
         program.release();

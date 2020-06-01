@@ -2,7 +2,6 @@
 
 uniform sampler2D albedoTexture;
 uniform sampler2D specularTexture;
-uniform bool selected;
 uniform float selectionColor;
 
 in vec2 vTexCoords;

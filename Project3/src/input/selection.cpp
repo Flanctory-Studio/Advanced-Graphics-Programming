@@ -40,6 +40,17 @@ bool Selection::contains(Entity* entity)
     return false;
 }
 
+QList<Entity*> Selection::GetEntities()
+{
+    QList<Entity*> ret;
+    for (int i = 0; i < count; ++i)
+    {
+        ret << entities[i];
+    }
+
+    return ret;
+}
+
 
 void Selection::onEntitySelectedFromEditor(Entity *entity)
 {

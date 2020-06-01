@@ -21,17 +21,19 @@ public:
     void render(Camera *camera) override;
 
     void GenerateGeometryFBO(int w, int h);
-
     void GenerateLightFBO(int w, int h);
+    void GenerateOutlineFBO(int w, int h);
 
 private:
 
     void passLights(Camera *camera);
     void passMeshes(Camera *camera);
+    void passOutline(Camera *camera);
     void passBlit();
 
     // Shaders
     ShaderProgram *deferredGeometry = nullptr;
+    ShaderProgram* outlineGeometry = nullptr;
     ShaderProgram *blitProgram = nullptr;
     ShaderProgram *deferredLight = nullptr;
 
@@ -41,9 +43,11 @@ private:
     GLuint fboFinal = 0;
     GLuint fboDepth = 0;
     GLuint selectionTexture = 0;
+    GLuint outlineTexture = 0;
 
     FramebufferObject *fboGeometry = nullptr;
     FramebufferObject *fboLight = nullptr;
+    FramebufferObject *fboOutline = nullptr;
 
 public:
      int width = 0;

@@ -21,6 +21,8 @@ public:
     int count = 0;
     Entity *entities[MAX_SELECTED_ENTITIES] = {};
 
+    QList<Entity*> GetEntities();
+
 signals:
     void entitySelected(Entity *);
 
