@@ -535,6 +535,13 @@ void DeferredRenderer::passBlit()
             gl->glBindTexture(GL_TEXTURE_2D, selectionTexture);
         }
 
+        program.setUniformValue("outlineTexture", 1);
+        gl->glActiveTexture(GL_TEXTURE1);
+        gl->glBindTexture(GL_TEXTURE_2D, selectionTexture);
+        program.setUniformValue("outlineColor", QVector3D(1.0f, 0.0f, 0.0f));
+        program.setUniformValue("outlineWidth", 2.0f);
+        program.setUniformValue("outlineElement", selectedColor);
+
         resourceManager->quad->submeshes[0]->draw();
         program.release();
     }
