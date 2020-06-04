@@ -130,7 +130,7 @@ void MiscSettingsWidget::onOutlineColorClicked()
     if (color.isValid())
     {
         QString colorName = color.name();
-        ui->buttonBackgroundColor->setStyleSheet(QString::fromLatin1("outline-color: %0").arg(colorName));
+        ui->buttonOutlineColor->setStyleSheet(QString::fromLatin1("background-color: %0").arg(colorName));
         miscSettings->outlineColor = color;
         emit settingsChanged();
     }

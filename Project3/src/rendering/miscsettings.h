@@ -11,7 +11,7 @@ public:
     // TODO: Maybe not the best place for this stuff...
     bool renderGrid = true;
     QColor backgroundColor;
-    QColor outlineColor;
+    QColor outlineColor = QColor(1.0, 0.0, 0.0, 1.0);
     bool renderLightSources = true;
 
     bool useReliefMapping = false;
