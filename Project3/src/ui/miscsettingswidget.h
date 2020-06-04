@@ -22,6 +22,7 @@ signals:
 public slots:
 
     void onCameraSpeedChanged(double speed);
+    void onOutlineWidth(double width);
     void onCameraFovYChanged(double speed);
     void onMaxSubmeshesChanged(int n);
     void onBackgroundColorClicked();

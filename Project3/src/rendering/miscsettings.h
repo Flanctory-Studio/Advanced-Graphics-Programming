@@ -11,11 +11,13 @@ public:
     // TODO: Maybe not the best place for this stuff...
     bool renderGrid = true;
     QColor backgroundColor;
-    QColor outlineColor = QColor(1.0, 0.0, 0.0, 1.0);
+    QColor outlineColor = QColorConstants::Red;
     bool renderLightSources = true;
 
     bool useReliefMapping = false;
     bool useDepthOfField = false;
+
+    double outlineWidth = 2.0;
 };
 
 #endif // MISCSETTINGS_H
