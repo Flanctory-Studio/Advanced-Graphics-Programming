@@ -23,6 +23,7 @@ public:
     void GenerateGeometryFBO(int w, int h);
     void GenerateLightFBO(int w, int h);
     void GenerateOutlineFBO(int w, int h);
+    void GenerateGridFBO(int w, int h);
 
 private:
 
@@ -46,10 +47,12 @@ private:
     GLuint fboDepth = 0;
     GLuint selectionTexture = 0;
     GLuint outlineTexture = 0;
+    GLuint gridTexture = 0;
 
     FramebufferObject *fboGeometry = nullptr;
     FramebufferObject *fboLight = nullptr;
     FramebufferObject *fboOutline = nullptr;
+    FramebufferObject *fboGrid = nullptr;
 
 public:
      int width = 0;

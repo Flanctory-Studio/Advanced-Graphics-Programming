@@ -60,6 +60,7 @@ DeferredRenderer::DeferredRenderer() :
     addTexture("Depth");
     addTexture("Selection");
     addTexture("Outline");
+    addTexture("Grid");
 
     rendererType = RendererType::DEFERRED;
 }
@@ -69,6 +70,7 @@ DeferredRenderer::~DeferredRenderer()
     delete fboGeometry;
     delete fboLight;
     delete fboOutline;
+    delete fboGrid;
 }
 
 void DeferredRenderer::initialize()
@@ -116,6 +118,9 @@ void DeferredRenderer::initialize()
 
     fboOutline = new FramebufferObject();
     fboOutline->create();
+
+    fboGrid = new FramebufferObject();
+    fboGrid->create();
 }
 
 void DeferredRenderer::finalize()
@@ -128,6 +133,9 @@ void DeferredRenderer::finalize()
 
     fboOutline->destroy();
     delete fboOutline;
+
+    fboGrid->destroy();
+    delete fboGrid;
 }
 
 void DeferredRenderer::GenerateGeometryFBO(int w, int h)
@@ -291,6 +299,42 @@ void DeferredRenderer::GenerateOutlineFBO(int w, int h)
     fboOutline->release();
 }
 
+void DeferredRenderer::GenerateGridFBO(int w, int h)
+{
+    if (gridTexture != 0) gl->glDeleteTextures(1, &gridTexture);
+    gl->glGenTextures(1, &gridTexture);
+    gl->glBindTexture(GL_TEXTURE_2D, gridTexture);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+    glBindTexture(GL_TEXTURE_2D,0);
+
+    // Attach textures to the fbo
+    fboGrid->bind();
+
+    // Draw on selected buffers
+    GLenum buffs[]=
+    {
+        GL_COLOR_ATTACHMENT0
+    };
+    gl->glDrawBuffers(1, buffs);
+
+//    OpenGLState state;
+//    state.depthTest = true;
+//    state.blending = true;
+//    state.blendFuncSrc = GL_SRC_ALPHA;
+//    state.blendFuncDst = GL_ONE_MINUS_SRC_ALPHA;
+//    state.apply();
+
+    fboGrid->addColorAttachment(0, gridTexture);
+    fboGrid->checkStatus();
+    fboGrid->release();
+}
+
 void DeferredRenderer::resize(int w, int h)
 {
     OpenGLErrorGuard guard(__FUNCTION__);
@@ -306,6 +350,9 @@ void DeferredRenderer::resize(int w, int h)
     // fbo Outline
     GenerateOutlineFBO(w, h);
 
+    // fbo Grid
+    GenerateGridFBO(w, h);
+
     width = w;
     height = h;
 }
@@ -314,10 +361,21 @@ void DeferredRenderer::render(Camera *camera)
 {
     OpenGLErrorGuard guard(__FUNCTION__);
 
-    fboGeometry->bind();
+
+    fboGrid->bind();
+
+    // Clear color
+    gl->glClearDepth(1.0);
+    gl->glClearColor(0.0, 0.0, 0.0, 1.0);
+    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //Grid
-    //passGrid(camera);
+    passGrid(camera);
+
+    fboGrid->release();
+
+
+    fboGeometry->bind();
 
     // Clear color
     gl->glClearDepth(1.0);
@@ -606,6 +664,9 @@ void DeferredRenderer::passLights(Camera *camera)
         program.setUniformValue("gAlbedoSpec", 2);
         gl->glActiveTexture(GL_TEXTURE2);
         gl->glBindTexture(GL_TEXTURE_2D, fboAlbedo);
+        program.setUniformValue("gGrid", 3);
+        gl->glActiveTexture(GL_TEXTURE3);
+        gl->glBindTexture(GL_TEXTURE_2D, gridTexture);
 
         resourceManager->quad->submeshes[0]->draw();
 
@@ -629,9 +690,9 @@ void DeferredRenderer::passBlit()
         if (shownTexture() == "Final") {
             gl->glBindTexture(GL_TEXTURE_2D, fboFinal);
         }
-        if (shownTexture() == "Position") {
+        else if (shownTexture() == "Position") {
             gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
-        }
+        }        
         else if (shownTexture() == "Normals") {
             gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
         }
@@ -647,6 +708,9 @@ void DeferredRenderer::passBlit()
         }
         else if(shownTexture() == "Outline") {
             gl->glBindTexture(GL_TEXTURE_2D, outlineTexture);
+        }
+        else if(shownTexture() == "Grid") {
+            gl->glBindTexture(GL_TEXTURE_2D, gridTexture);
         }
 
         program.setUniformValue("outlineTexture", 1);
@@ -668,16 +732,6 @@ void DeferredRenderer::passGrid(Camera *camera)
 
     if(miscSettings->renderGrid == false) return;
 
-    GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT3 };
-    gl->glDrawBuffers(1, drawBuffers);
-
-    OpenGLState state;
-    state.depthTest = true;
-    state.blending = true;
-    state.blendFuncSrc = GL_SRC_ALPHA;
-    state.blendFuncDst = GL_ONE_MINUS_SRC_ALPHA;
-    state.apply();
-
     QOpenGLShaderProgram &program = gridProgram->program;
 
     if(program.bind())
@@ -685,7 +739,7 @@ void DeferredRenderer::passGrid(Camera *camera)
         QVector4D cameraParameters = camera->getLeftRightBottomTop();
         program.setUniformValue("left", cameraParameters.x());
         program.setUniformValue("right", cameraParameters.y());
-        program.setUniformValue("bottoa", cameraParameters.z());
+        program.setUniformValue("bottom", cameraParameters.z());
         program.setUniformValue("top", cameraParameters.w());
         program.setUniformValue("znear", camera->znear);
 
@@ -693,6 +747,14 @@ void DeferredRenderer::passGrid(Camera *camera)
         program.setUniformValue("viewlatrix", camera->viewMatrix);
 
         program.setUniformValue("projectionMatrix", camera->projectionMatrix) ;
+
+        program.setUniformValue("position", 0);
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
+
+        program.setUniformValue("finalText", 1);
+        gl->glActiveTexture(GL_TEXTURE1);
+        gl->glBindTexture(GL_TEXTURE_2D, fboFinal);
 
         resourceManager->quad->submeshes[0]->draw();
 
