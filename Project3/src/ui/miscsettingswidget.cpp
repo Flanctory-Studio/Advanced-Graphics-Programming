@@ -15,6 +15,7 @@ MiscSettingsWidget::MiscSettingsWidget(QWidget *parent) :
     ui->spinFovY->setValue(DEFAULT_CAMERA_FOVY);
 
     connect(ui->spinCameraSpeed, SIGNAL(valueChanged(double)), this, SLOT(onCameraSpeedChanged(double)));
+    connect(ui->outlineWidthBox, SIGNAL(valueChanged(double)), this, SLOT(onOutlineWidth(double)));
     connect(ui->spinFovY, SIGNAL(valueChanged(double)), this, SLOT(onCameraFovYChanged(double)));
     connect(ui->buttonBackgroundColor, SIGNAL(clicked()), this, SLOT(onBackgroundColorClicked()));
     connect(ui->buttonOutlineColor, SIGNAL(clicked()), this, SLOT(onOutlineColorClicked()));
@@ -98,6 +99,13 @@ void MiscSettingsWidget::onCameraSpeedChanged(double speed)
     camera->speed = speed;
 }
 
+void MiscSettingsWidget::onOutlineWidth(double width)
+{
+    miscSettings->outlineWidth = width;
+    emit settingsChanged();
+}
+
+
 void MiscSettingsWidget::onCameraFovYChanged(double fovy)
 {
     camera->fovy = fovy;
@@ -130,7 +138,7 @@ void MiscSettingsWidget::onOutlineColorClicked()
     if (color.isValid())
     {
         QString colorName = color.name();
-        ui->buttonBackgroundColor->setStyleSheet(QString::fromLatin1("outline-color: %0").arg(colorName));
+        ui->buttonOutlineColor->setStyleSheet(QString::fromLatin1("background-color: %0").arg(colorName));
         miscSettings->outlineColor = color;
         emit settingsChanged();
     }
