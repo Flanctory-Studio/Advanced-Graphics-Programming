@@ -15,8 +15,8 @@ layout (location = 3) out vec4 outSelection;
 layout (location = 4) out vec4 fragmentdepth;
 
 
-float near = 100.0;
-float far  = 1.0;
+float near = 0.1;
+float far  = 100.0;
 
 float LinearizeDepth(float depth)
 {
