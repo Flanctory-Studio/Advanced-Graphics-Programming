@@ -7,11 +7,13 @@ uniform float selectionColor;
 in vec2 vTexCoords;
 in vec3 vNormal;
 in vec3 pos;
+in vec4 worldPos;
 
 layout (location = 0) out vec4 outPosition;
 layout (location = 1) out vec4 outNormals;
 layout (location = 2) out vec4 outAlbedo;
 layout (location = 3) out vec4 outSelection;
+layout (location = 4) out vec4 outWorldPos;
 
 void main(void)
 {
@@ -21,4 +23,5 @@ void main(void)
     outAlbedo.a = texture(specularTexture, vTexCoords).r;
 
     outSelection = vec4(selectionColor);
+    outWorldPos = worldPos;
 }
