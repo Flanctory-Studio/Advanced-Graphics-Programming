@@ -387,8 +387,8 @@ void DeferredRenderer::render(Camera *camera)
     fboGrid->release();
 
 
+//    gl->glEnable(GL_DEPTH_TEST);
     fboGeometry->bind();
-    gl->glEnable(GL_DEPTH_TEST);
 
     // Clear color
     gl->glClearDepth(1.0);
@@ -403,7 +403,7 @@ void DeferredRenderer::render(Camera *camera)
         //TODO: APPLY RELIEF MAPPING EFFECT
     }
 
-    gl->glDisable(GL_DEPTH_TEST);
+//    gl->glDisable(GL_DEPTH_TEST);
     fboGeometry->release();
 
 
@@ -531,6 +531,8 @@ void DeferredRenderer::passMeshes(Camera *camera)
                     program.setUniformValue("tiling", material->tiling);
 
                     program.setUniformValue("selectionColor", percent);
+                    program.setUniformValue("nearPlane", camera->znear);
+                    program.setUniformValue("farPlane", camera->zfar);
 
                     SEND_TEXTURE("albedoTexture", material->albedoTexture, resourceManager->texWhite, 0);
                     SEND_TEXTURE("emissiveTexture", material->emissiveTexture, resourceManager->texBlack, 1);

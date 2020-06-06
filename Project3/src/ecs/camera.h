@@ -8,8 +8,8 @@
 
 static const float DEFAULT_CAMERA_SPEED = 4.0f;
 static const float DEFAULT_CAMERA_FOVY = 60.0f;
-static const float DEFAULT_CAMERA_ZNEAR = 0.01f;
-static const float DEFAULT_CAMERA_ZFAR = 10000.0f;
+static const float DEFAULT_CAMERA_ZNEAR = 0.1f;
+static const float DEFAULT_CAMERA_ZFAR = 50.0f;
 
 class Camera
 {
