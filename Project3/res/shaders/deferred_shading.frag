@@ -9,12 +9,14 @@ uniform float farPlane;
 in vec2 vTexCoords;
 in vec3 vNormal;
 in vec3 pos;
+in vec4 worldPos;
 
 layout (location = 0) out vec4 outPosition;
 layout (location = 1) out vec4 outNormals;
 layout (location = 2) out vec4 outAlbedo;
 layout (location = 3) out vec4 outSelection;
-layout (location = 4) out vec4 fragmentdepth;
+layout (location = 4) out vec4 outWorldPos;
+layout (location = 5) out vec4 fragmentdepth;
 
 float LinearizeDepth(float depth)
 {
@@ -33,4 +35,6 @@ void main(void)
 
     float depth = 1.0 - (LinearizeDepth(gl_FragCoord.z) / farPlane);
     fragmentdepth = vec4(vec3(depth), 1.0);
+
+    outWorldPos = worldPos;
 }

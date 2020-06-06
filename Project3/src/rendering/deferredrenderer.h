@@ -48,6 +48,7 @@ private:
     GLuint selectionTexture = 0;
     GLuint outlineTexture = 0;
     GLuint gridTexture = 0;
+    GLuint fboWorldPos = 0;
 
     FramebufferObject *fboGeometry = nullptr;
     FramebufferObject *fboLight = nullptr;

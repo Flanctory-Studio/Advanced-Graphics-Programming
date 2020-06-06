@@ -7,8 +7,9 @@ uniform float top;
 uniform float znear;
 uniform mat4 worldMatrix;
 uniform mat4 viewMatrix;
+uniform bool drawGrid;
 
-uniform sampler2D position;
+uniform sampler2D worldPos;
 uniform sampler2D finalText;
 
 in vec2 texCoord;
@@ -25,10 +26,10 @@ float grid(vec3 worldPos, float gridStep)
 
 void main()
 {
-    vec3 Position = texture(position, texCoord).rgb;
+    vec3 Position = texture(worldPos, texCoord).rgb;
     vec3 Final = texture(finalText, texCoord).rgb;
 
-    if(Position.y <= 0.0)
+    if(Position.y <= 0.0 && drawGrid)
     {
         vec3 eyedirEyespace;
         eyedirEyespace.x = left + texCoord.x * (right - left);

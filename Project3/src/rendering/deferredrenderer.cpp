@@ -61,6 +61,7 @@ DeferredRenderer::DeferredRenderer() :
     addTexture("Selection");
     addTexture("Outline");
     addTexture("Grid");
+    addTexture("GlobalPos");
 
     rendererType = RendererType::DEFERRED;
 }
@@ -200,6 +201,16 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
+    if (fboWorldPos != 0) gl->glDeleteTextures(1, &fboWorldPos);
+    gl->glGenTextures(1, &fboWorldPos);
+    gl->glBindTexture(GL_TEXTURE_2D, fboWorldPos);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
     glBindTexture(GL_TEXTURE_2D,0);
 
     // Attach textures to the fbo
@@ -213,15 +224,17 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
         GL_COLOR_ATTACHMENT1,
         GL_COLOR_ATTACHMENT2,
         GL_COLOR_ATTACHMENT3,
-        GL_COLOR_ATTACHMENT4
+        GL_COLOR_ATTACHMENT4,
+        GL_COLOR_ATTACHMENT5
     };
-    gl->glDrawBuffers(5, buffs);
+    gl->glDrawBuffers(6, buffs);
 
     fboGeometry->addColorAttachment(0, fboPosition);
     fboGeometry->addColorAttachment(1, fboNormal);
     fboGeometry->addColorAttachment(2, fboAlbedo);
     fboGeometry->addColorAttachment(3, selectionTexture);
-    fboGeometry->addColorAttachment(4, fboDepth);
+    fboGeometry->addColorAttachment(4, fboWorldPos);
+    fboGeometry->addColorAttachment(5, fboDepth);
     //fboGeometry->addDepthAttachment(fboDepth);
     fboGeometry->checkStatus();
     fboGeometry->release();
@@ -500,6 +513,7 @@ void DeferredRenderer::passMeshes(Camera *camera)
                 program.setUniformValue("worldMatrix", worldMatrix);
                 program.setUniformValue("worldViewMatrix", worldViewMatrix);
                 program.setUniformValue("normalMatrix", normalMatrix);
+                program.setUniformValue("uWorldPos", meshRenderer->entity->transform->position);
 
                 int materialIndex = 0;
                 for (auto submesh : mesh->submeshes)
@@ -681,9 +695,6 @@ void DeferredRenderer::passLights(Camera *camera)
         program.setUniformValue("gAlbedoSpec", 2);
         gl->glActiveTexture(GL_TEXTURE2);
         gl->glBindTexture(GL_TEXTURE_2D, fboAlbedo);
-        program.setUniformValue("gGrid", 3);
-        gl->glActiveTexture(GL_TEXTURE3);
-        gl->glBindTexture(GL_TEXTURE_2D, gridTexture);
 
         resourceManager->quad->submeshes[0]->draw();
 
@@ -705,7 +716,7 @@ void DeferredRenderer::passBlit()
         gl->glActiveTexture(GL_TEXTURE0);
 
         if (shownTexture() == "Final") {
-            gl->glBindTexture(GL_TEXTURE_2D, fboFinal);
+            gl->glBindTexture(GL_TEXTURE_2D, gridTexture);
         }
         else if (shownTexture() == "Position") {
             gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
@@ -725,9 +736,6 @@ void DeferredRenderer::passBlit()
         }
         else if(shownTexture() == "Outline") {
             gl->glBindTexture(GL_TEXTURE_2D, outlineTexture);
-        }
-        else if(shownTexture() == "Grid") {
-            gl->glBindTexture(GL_TEXTURE_2D, gridTexture);
         }
 
         program.setUniformValue("outlineTexture", 1);
@@ -750,9 +758,6 @@ void DeferredRenderer::passBlit()
 
 void DeferredRenderer::passGrid(Camera *camera)
 {
-
-    if(miscSettings->renderGrid == false) return;
-
     QOpenGLShaderProgram &program = gridProgram->program;
 
     if(program.bind())
@@ -767,11 +772,11 @@ void DeferredRenderer::passGrid(Camera *camera)
         program.setUniformValue("worldMatrix", camera->worldMatrix);
         program.setUniformValue("viewlatrix", camera->viewMatrix);
 
-        program.setUniformValue("projectionMatrix", camera->projectionMatrix) ;
+        program.setUniformValue("drawGrid", miscSettings->renderGrid) ;
 
-        program.setUniformValue("position", 0);
+        program.setUniformValue("worldPos", 0);
         gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
+        gl->glBindTexture(GL_TEXTURE_2D, fboWorldPos);
 
         program.setUniformValue("finalText", 1);
         gl->glActiveTexture(GL_TEXTURE1);
