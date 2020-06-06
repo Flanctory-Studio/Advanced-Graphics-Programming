@@ -60,7 +60,7 @@ DeferredRenderer::DeferredRenderer() :
     addTexture("Depth");
     addTexture("Selection");
     addTexture("Outline");
-    addTexture("Grid");
+    //addTexture("Grid");
     addTexture("GlobalPos");
 
     rendererType = RendererType::DEFERRED;
