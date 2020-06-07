@@ -106,6 +106,7 @@ DeferredRenderer::DeferredRenderer() :
     addTexture("Outline");
     //addTexture("Grid");
     addTexture("GlobalPos");
+    addTexture("SSAO");
 
     rendererType = RendererType::DEFERRED;
 
@@ -398,12 +399,11 @@ void DeferredRenderer::GenerateSSAOFBO(int w, int h)
     if (textureSSAO != 0) gl->glDeleteTextures(1, &textureSSAO);
     gl->glGenTextures(1, &textureSSAO);
     gl->glBindTexture(GL_TEXTURE_2D, textureSSAO);
+
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, w, h, 0, GL_RED, GL_FLOAT, NULL);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureSSAO, 0);
 
     glBindTexture(GL_TEXTURE_2D,0);
 
@@ -843,6 +843,9 @@ void DeferredRenderer::passBlit()
         }
         else if(shownTexture() == "Outline") {
             gl->glBindTexture(GL_TEXTURE_2D, outlineTexture);
+        }
+        else if(shownTexture() == "SSAO") {
+            gl->glBindTexture(GL_TEXTURE_2D, textureSSAO);
         }
 
         program.setUniformValue("outlineTexture", 1);
