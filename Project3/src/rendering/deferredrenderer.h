@@ -25,6 +25,7 @@ public:
     void GenerateOutlineFBO(int w, int h);
     void GenerateGridFBO(int w, int h);
     void GenerateSSAOFBO(int w, int h);
+    void GenerateSSAOBlurFBO(int w, int h);
 
 private:
 
@@ -45,6 +46,7 @@ private:
     ShaderProgram *blitProgram = nullptr;
     ShaderProgram *deferredLight = nullptr;
     ShaderProgram* SSAOProgram = nullptr;
+    ShaderProgram *SSAOBlur = nullptr;
 
     GLuint fboPosition = 0;
     GLuint fboNormal = 0;
@@ -54,6 +56,7 @@ private:
     GLuint selectionTexture = 0;
     GLuint outlineTexture = 0;
     GLuint gridTexture = 0;
+    GLuint SSAOBlurTexture = 0;
     GLuint fboWorldPos = 0;
     GLuint textureSSAO = 0;
 
@@ -62,6 +65,7 @@ private:
     FramebufferObject *fboOutline = nullptr;
     FramebufferObject *fboGrid = nullptr;
     FramebufferObject* fboSSAO= nullptr;
+    FramebufferObject *SSAOBlurFBO = nullptr;
 
 
     // SSAO

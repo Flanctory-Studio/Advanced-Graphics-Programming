@@ -125,7 +125,7 @@ void DeferredRenderer::initialize()
 {
     OpenGLErrorGuard guard(__FUNCTION__);
 
-    // Create programs
+    // Create shader programs
     deferredGeometry = resourceManager->createShaderProgram();
     deferredGeometry->name = "Deferred Geometry";
     deferredGeometry->vertexShaderFilename = "res/shaders/deferred_shading.vert";
@@ -150,17 +150,23 @@ void DeferredRenderer::initialize()
     blitProgram->fragmentShaderFilename = "res/shaders/blit.frag";
     blitProgram->includeForSerialization = false;
 
-   gridProgram = resourceManager->createShaderProgram();
-   gridProgram->name = "Grid Program";
-   gridProgram->vertexShaderFilename = "res/shaders/grid.vert";
-   gridProgram->fragmentShaderFilename = "res/shaders/grid.frag";
-   gridProgram->includeForSerialization = false;
+    gridProgram = resourceManager->createShaderProgram();
+    gridProgram->name = "Grid Program";
+    gridProgram->vertexShaderFilename = "res/shaders/grid.vert";
+    gridProgram->fragmentShaderFilename = "res/shaders/grid.frag";
+    gridProgram->includeForSerialization = false;
 
    SSAOProgram = resourceManager->createShaderProgram();
    SSAOProgram->name = "SSAO Program";
-   SSAOProgram->vertexShaderFilename = "res/shaders/SSAO.vert";
-   SSAOProgram->fragmentShaderFilename = "res/shaders/SSAO.frag";
+   SSAOProgram->vertexShaderFilename = "res/shaders/ssao.vert";
+   SSAOProgram->fragmentShaderFilename = "res/shaders/ssao.frag";
    SSAOProgram->includeForSerialization = false;
+
+    SSAOBlur = resourceManager->createShaderProgram();
+    SSAOBlur->name = "SSAO Blur Program";
+    SSAOBlur->vertexShaderFilename = "res/shaders/SSAOBlur.vert";
+    SSAOBlur->fragmentShaderFilename = "res/shaders/SSAOBlur.frag";
+    SSAOBlur->includeForSerialization = false;
 
     // Create FBO
     fboGeometry = new FramebufferObject();
@@ -177,6 +183,9 @@ void DeferredRenderer::initialize()
 
     fboSSAO = new FramebufferObject();
     fboSSAO->create();
+
+    SSAOBlurFBO = new FramebufferObject();
+    SSAOBlurFBO->create();
 }
 
 void DeferredRenderer::finalize()
@@ -195,6 +204,9 @@ void DeferredRenderer::finalize()
 
     fboSSAO->destroy();
     delete fboSSAO;
+
+    SSAOBlurFBO->destroy();
+    delete SSAOBlurFBO;
 }
 
 void DeferredRenderer::GenerateGeometryFBO(int w, int h)
@@ -410,6 +422,35 @@ void DeferredRenderer::GenerateSSAOFBO(int w, int h)
     fboSSAO->release();
 }
 
+void DeferredRenderer::GenerateSSAOBlurFBO(int w, int h)
+{
+    if (SSAOBlurTexture != 0) gl->glDeleteTextures(1, &SSAOBlurTexture);
+    gl->glGenTextures(1, &SSAOBlurTexture);
+    gl->glBindTexture(GL_TEXTURE_2D, SSAOBlurTexture);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+    glBindTexture(GL_TEXTURE_2D,0);
+
+    // Attach textures to the fbo
+    SSAOBlurFBO->bind();
+
+    // Draw on selected buffers
+    GLenum buffs[]=
+    {
+        GL_COLOR_ATTACHMENT0
+    };
+    gl->glDrawBuffers(1, buffs);
+
+    SSAOBlurFBO->addColorAttachment(0, SSAOBlurTexture);
+    SSAOBlurFBO->checkStatus();
+    SSAOBlurFBO->release();
+}
+
 void DeferredRenderer::resize(int w, int h)
 {
     OpenGLErrorGuard guard(__FUNCTION__);
@@ -430,6 +471,9 @@ void DeferredRenderer::resize(int w, int h)
 
     // fbo SSAO
     GenerateSSAOFBO(w, h);
+
+    //fbo SSAO Blur
+    GenerateSSAOBlurFBO(w, h);
 
     width = w;
     height = h;
@@ -783,7 +827,7 @@ void DeferredRenderer::passBlit()
         }
         else if (shownTexture() == "Position") {
             gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
-        }        
+        }
         else if (shownTexture() == "Normals") {
             gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
         }
@@ -871,15 +915,3 @@ void DeferredRenderer::passSSAO(Camera* camera)
         program.release();
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-

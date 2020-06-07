@@ -122,6 +122,9 @@ DISTFILES += \
     res/shaders/light_pass.vert \
     res/shaders/outline.frag \
     res/shaders/outline.vert \
+    res/shaders/ssao.frag \
+    res/shaders/ssao.vert \
+    res/shaders/ssao_blur.frag \
     res/shaders/texture_view.frag \
     res/shaders/texture_view.vert
 
