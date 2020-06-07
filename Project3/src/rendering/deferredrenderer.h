@@ -34,6 +34,7 @@ private:
     void passOutline(Camera *camera);
     void passGrid(Camera *camera);
     void passSSAO(Camera *camera);
+    void passSSAOBlur(Camera* camera);
     void passBlit();
 
     float Lerp(float a, float b, float f);
