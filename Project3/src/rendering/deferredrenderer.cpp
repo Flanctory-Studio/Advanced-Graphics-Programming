@@ -497,19 +497,6 @@ void DeferredRenderer::render(Camera *camera)
     OpenGLErrorGuard guard(__FUNCTION__);
 
 
-    fboGrid->bind();
-
-    // Clear color
-    gl->glClearDepth(1.0);
-    gl->glClearColor(0.0, 0.0, 0.0, 1.0);
-    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    //Grid
-    passGrid(camera);
-
-    fboGrid->release();
-
-
 //    gl->glEnable(GL_DEPTH_TEST);
     fboGeometry->bind();
 
@@ -571,6 +558,18 @@ void DeferredRenderer::render(Camera *camera)
 
     fboLight->release();
 
+    fboGrid->bind();
+
+    // Clear color
+    gl->glClearDepth(1.0);
+    gl->glClearColor(0.0, 0.0, 0.0, 1.0);
+    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    //Grid
+    passGrid(camera);
+
+    fboGrid->release();
+
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     passBlit();
@@ -588,6 +587,9 @@ void DeferredRenderer::render(Camera *camera)
 
     gl->glReadBuffer(0);
     fboGeometry->release();
+
+
+
 }
 
 void DeferredRenderer::passMeshes(Camera *camera)
@@ -805,6 +807,8 @@ void DeferredRenderer::passLights(Camera *camera)
 
         program.setUniformValue("viewPos", camera->position);
         program.setUniformValue("backgroundColor", QVector3D(miscSettings->backgroundColor.redF(), miscSettings->backgroundColor.greenF(), miscSettings->backgroundColor.blueF()));
+
+        qWarning("Color de mierda: %f, %f, %f", miscSettings->backgroundColor.redF(), miscSettings->backgroundColor.greenF(), miscSettings->backgroundColor.blueF());
 
         program.setUniformValue("gPosition", 0);
         gl->glActiveTexture(GL_TEXTURE0);
