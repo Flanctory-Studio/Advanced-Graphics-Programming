@@ -45,6 +45,7 @@ private:
     void RenderSSAO(Camera* camera);
     void RenderLight(Camera* camera);
     void RenderGrid(Camera* camera);
+    void RenderSSAOBlur(Camera *camera);
     void StoreSelectionPixels();
 
 private:
@@ -63,6 +64,7 @@ private:
     GLuint fboAlbedo = 0;
     GLuint fboFinal = 0;
     GLuint fboDepth = 0;
+    GLuint depthAttachment = 0;
     GLuint selectionTexture = 0;
     GLuint outlineTexture = 0;
     GLuint gridTexture = 0;

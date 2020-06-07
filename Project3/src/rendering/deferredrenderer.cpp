@@ -274,6 +274,16 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
+    if (depthAttachment != 0) gl->glDeleteTextures(1, &depthAttachment);
+    gl->glGenTextures(1, &depthAttachment);
+    gl->glBindTexture(GL_TEXTURE_2D, depthAttachment);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+
     glBindTexture(GL_TEXTURE_2D,0);
 
     // Attach textures to the fbo
@@ -297,6 +307,7 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
     fboGeometry->addColorAttachment(3, selectionTexture);
     fboGeometry->addColorAttachment(4, fboWorldPos);
     fboGeometry->addColorAttachment(5, fboDepth);
+    fboGeometry->addDepthAttachment(depthAttachment);
     fboGeometry->checkStatus();
     fboGeometry->release();
 }
@@ -492,7 +503,7 @@ void DeferredRenderer::resize(int w, int h)
     height = h;
 }
 
-void DeferredRenderer::RenderGeometry()
+void DeferredRenderer::RenderGeometry(Camera *camera)
 {
     fboGeometry->bind();
 
@@ -511,7 +522,7 @@ void DeferredRenderer::RenderGeometry()
     fboGeometry->release();
 }
 
-void DeferredRenderer::RenderOutline()
+void DeferredRenderer::RenderOutline(Camera *camera)
 {
     fboOutline->bind();
 
@@ -526,7 +537,7 @@ void DeferredRenderer::RenderOutline()
     fboOutline->release();
 }
 
-void DeferredRenderer::RenderSSAO()
+void DeferredRenderer::RenderSSAO(Camera *camera)
 {
     fboSSAO->bind();
 
@@ -541,7 +552,7 @@ void DeferredRenderer::RenderSSAO()
     fboSSAO->release();
 }
 
-void DeferredRenderer::RenderSSAOBlur()
+void DeferredRenderer::RenderSSAOBlur(Camera *camera)
 {
     SSAOBlurFBO->bind();
 
@@ -556,7 +567,7 @@ void DeferredRenderer::RenderSSAOBlur()
     SSAOBlurFBO->release();
 }
 
-void DeferredRenderer::RenderLight()
+void DeferredRenderer::RenderLight(Camera *camera)
 {
     fboLight->bind();
 
@@ -576,7 +587,7 @@ void DeferredRenderer::RenderLight()
     fboLight->release();
 }
 
-void DeferredRenderer::RenderGrid()
+void DeferredRenderer::RenderGrid(Camera *camera)
 {
     fboGrid->bind();
 
@@ -610,17 +621,17 @@ void DeferredRenderer::render(Camera *camera)
 {
     OpenGLErrorGuard guard(__FUNCTION__);
 
-    RenderGeometry();
+    RenderGeometry(camera);
 
-    RenderOutline();
+    RenderOutline(camera);
 
-    RenderSSAO();
+    RenderSSAO(camera);
 
-    RenderSSAOBlur();
+    RenderSSAOBlur(camera);
 
-    RenderLight();
+    RenderLight(camera);
 
-    RenderGrid();
+    RenderGrid(camera);
 
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     passBlit();
