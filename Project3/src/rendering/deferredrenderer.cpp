@@ -212,6 +212,8 @@ void DeferredRenderer::finalize()
 
 void DeferredRenderer::GenerateGeometryFBO(int w, int h)
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     if (fboPosition != 0) gl->glDeleteTextures(1, &fboPosition);
     gl->glGenTextures(1, &fboPosition);
     gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
@@ -301,6 +303,8 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
 
 void DeferredRenderer::GenerateLightFBO(int w, int h)
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     if (fboFinal == 0) gl->glDeleteTextures(1, &fboFinal);
     gl->glGenTextures(1, &fboFinal);
     gl->glBindTexture(GL_TEXTURE_2D, fboFinal);
@@ -331,6 +335,8 @@ void DeferredRenderer::GenerateLightFBO(int w, int h)
 
 void DeferredRenderer::GenerateOutlineFBO(int w, int h)
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     if (outlineTexture != 0) gl->glDeleteTextures(1, &outlineTexture);
     gl->glGenTextures(1, &outlineTexture);
     gl->glBindTexture(GL_TEXTURE_2D, outlineTexture);
@@ -360,6 +366,8 @@ void DeferredRenderer::GenerateOutlineFBO(int w, int h)
 
 void DeferredRenderer::GenerateGridFBO(int w, int h)
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     if (gridTexture != 0) gl->glDeleteTextures(1, &gridTexture);
     gl->glGenTextures(1, &gridTexture);
     gl->glBindTexture(GL_TEXTURE_2D, gridTexture);
@@ -396,14 +404,17 @@ void DeferredRenderer::GenerateGridFBO(int w, int h)
 
 void DeferredRenderer::GenerateSSAOFBO(int w, int h)
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     if (textureSSAO != 0) gl->glDeleteTextures(1, &textureSSAO);
     gl->glGenTextures(1, &textureSSAO);
     gl->glBindTexture(GL_TEXTURE_2D, textureSSAO);
-
-    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, w, h, 0, GL_RED, GL_FLOAT, NULL);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureSSAO, 0);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
     glBindTexture(GL_TEXTURE_2D,0);
 
@@ -424,6 +435,8 @@ void DeferredRenderer::GenerateSSAOFBO(int w, int h)
 
 void DeferredRenderer::GenerateSSAOBlurFBO(int w, int h)
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     if (SSAOBlurTexture != 0) gl->glDeleteTextures(1, &SSAOBlurTexture);
     gl->glGenTextures(1, &SSAOBlurTexture);
     gl->glBindTexture(GL_TEXTURE_2D, SSAOBlurTexture);
