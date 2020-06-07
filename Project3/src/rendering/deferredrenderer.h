@@ -39,6 +39,15 @@ private:
     float Lerp(float a, float b, float f);
     void GenerateSSAOTextures();
 
+    void RenderGeometry();
+    void RenderOutline();
+    void RenderSSAO();
+    void RenderLight();
+    void RenderGrid();
+    void StoreSelectionPixels();
+
+private:
+
     // Shaders
     ShaderProgram *deferredGeometry = nullptr;
     ShaderProgram* outlineGeometry = nullptr;
