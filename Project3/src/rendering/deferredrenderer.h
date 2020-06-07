@@ -24,6 +24,7 @@ public:
     void GenerateLightFBO(int w, int h);
     void GenerateOutlineFBO(int w, int h);
     void GenerateGridFBO(int w, int h);
+    void GenerateSSAOFBO(int w, int h);
 
 private:
 
@@ -31,7 +32,11 @@ private:
     void passMeshes(Camera *camera);
     void passOutline(Camera *camera);
     void passGrid(Camera *camera);
+    void passSSAO(Camera *camera);
     void passBlit();
+
+    float Lerp(float a, float b, float f);
+    void GenerateSSAOTextures();
 
     // Shaders
     ShaderProgram *deferredGeometry = nullptr;
@@ -39,6 +44,7 @@ private:
     ShaderProgram *gridProgram = nullptr;
     ShaderProgram *blitProgram = nullptr;
     ShaderProgram *deferredLight = nullptr;
+    ShaderProgram* SSAOProgram = nullptr;
 
     GLuint fboPosition = 0;
     GLuint fboNormal = 0;
@@ -49,11 +55,18 @@ private:
     GLuint outlineTexture = 0;
     GLuint gridTexture = 0;
     GLuint fboWorldPos = 0;
+    GLuint textureSSAO = 0;
 
     FramebufferObject *fboGeometry = nullptr;
     FramebufferObject *fboLight = nullptr;
     FramebufferObject *fboOutline = nullptr;
     FramebufferObject *fboGrid = nullptr;
+    FramebufferObject* fboSSAO= nullptr;
+
+
+    // SSAO
+    std::vector<QVector3D> ssaoKernel;
+    GLuint noiseTexture = 0;
 
 public:
      int width = 0;
