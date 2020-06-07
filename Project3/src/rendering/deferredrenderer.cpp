@@ -157,11 +157,11 @@ void DeferredRenderer::initialize()
     gridProgram->fragmentShaderFilename = "res/shaders/grid.frag";
     gridProgram->includeForSerialization = false;
 
-   SSAOProgram = resourceManager->createShaderProgram();
-   SSAOProgram->name = "SSAO Program";
-   SSAOProgram->vertexShaderFilename = "res/shaders/ssao.vert";
-   SSAOProgram->fragmentShaderFilename = "res/shaders/ssao.frag";
-   SSAOProgram->includeForSerialization = false;
+    SSAOProgram = resourceManager->createShaderProgram();
+    SSAOProgram->name = "SSAO Program";
+    SSAOProgram->vertexShaderFilename = "res/shaders/ssao.vert";
+    SSAOProgram->fragmentShaderFilename = "res/shaders/ssao.frag";
+    SSAOProgram->includeForSerialization = false;
 
     SSAOBlur = resourceManager->createShaderProgram();
     SSAOBlur->name = "SSAO Blur Program";
@@ -564,7 +564,6 @@ void DeferredRenderer::RenderSSAOBlur(Camera *camera)
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //SSAO Blur
-    passSSAOBlur(camera);
 
     SSAOBlurFBO->release();
 }
@@ -940,7 +939,7 @@ void DeferredRenderer::passSSAO(Camera* camera)
     }
 }
 
-void DeferredRenderer::passSSAOBlur(Camera* camera)
+void DeferredRenderer::passSSAOBlur()
 {
     OpenGLErrorGuard guard(__FUNCTION__);
 
