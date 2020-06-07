@@ -7,6 +7,9 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D texNoise;
 
+uniform float width;
+uniform float height;
+
 uniform vec3 samples[64];
 
 int kernelSize = 64;
@@ -15,12 +18,11 @@ float bias = 0.025;
 
 // tile noise texture over screen based on screen dimensions divided by noise size
 
-const vec2 noiseScale = vec2(800.0/4.0, 600.0/4.0);
-
 uniform mat4 projection;
 
 void main()
 {
+    vec2 noiseScale = vec2(width/4.0, height/4.0);
 
     vec3 fragPos = texture(gPosition, vTexCoords).xyz;
     vec3 normal = normalize(texture(gNormal, vTexCoords).rgb);

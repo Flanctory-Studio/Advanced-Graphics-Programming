@@ -818,7 +818,6 @@ void DeferredRenderer::passLights(Camera *camera)
 
     gl->glDisable(GL_DEPTH_TEST);
 
-
     QOpenGLShaderProgram &program = deferredLight->program;
 
     if(program.bind())
@@ -969,10 +968,17 @@ void DeferredRenderer::passSSAO(Camera* camera)
     {
         program.setUniformValueArray("samples", &ssaoKernel[0], ssaoKernel.size());
         program.setUniformValue("projection", camera->projectionMatrix);
+
+        program.setUniformValue("width", width);
+        program.setUniformValue("height", height);
+
+        program.setUniformValue("gPosition", 0);
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
+        program.setUniformValue("gNormal", 1);
         gl->glActiveTexture(GL_TEXTURE1);
         gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
+        program.setUniformValue("texNoise", 2);
         gl->glActiveTexture(GL_TEXTURE2);
         gl->glBindTexture(GL_TEXTURE_2D, noiseTexture);
 
