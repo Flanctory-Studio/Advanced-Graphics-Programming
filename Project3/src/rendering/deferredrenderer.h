@@ -39,11 +39,11 @@ private:
     float Lerp(float a, float b, float f);
     void GenerateSSAOTextures();
 
-    void RenderGeometry();
-    void RenderOutline();
-    void RenderSSAO();
-    void RenderLight();
-    void RenderGrid();
+    void RenderGeometry(Camera* camera);
+    void RenderOutline(Camera* camera);
+    void RenderSSAO(Camera* camera);
+    void RenderLight(Camera* camera);
+    void RenderGrid(Camera* camera);
     void StoreSelectionPixels();
 
 private:

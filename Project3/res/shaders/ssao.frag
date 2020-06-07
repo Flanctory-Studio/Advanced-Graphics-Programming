@@ -1,5 +1,5 @@
 #version 330 core
-out float FragColor;
+layout (location = 0) out vec4 outColor;
 
 in vec2 vTexCoords;
 
@@ -12,6 +12,8 @@ uniform vec3 samples[64];
 int kernelSize = 64;
 float radius = 0.5;
 float bias = 0.025;
+
+// tile noise texture over screen based on screen dimensions divided by noise size
 
 const vec2 noiseScale = vec2(800.0/4.0, 600.0/4.0);
 
@@ -46,5 +48,5 @@ void main()
     }
     occlusion = 1.0 - (occlusion / kernelSize);
 
-    FragColor = occlusion;
+    outColor = vec4(occlusion);
 }
