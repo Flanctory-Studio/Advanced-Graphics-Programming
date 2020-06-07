@@ -875,6 +875,8 @@ void DeferredRenderer::passLights(Camera *camera)
 
 void DeferredRenderer::passBlit()
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     gl->glDisable(GL_DEPTH_TEST);
 
     QOpenGLShaderProgram &program = blitProgram->program;
@@ -930,6 +932,8 @@ void DeferredRenderer::passBlit()
 
 void DeferredRenderer::passGrid(Camera *camera)
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     QOpenGLShaderProgram &program = gridProgram->program;
 
     if(program.bind())
@@ -962,11 +966,14 @@ void DeferredRenderer::passGrid(Camera *camera)
 
 void DeferredRenderer::passSSAO(Camera* camera)
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     QOpenGLShaderProgram &program = SSAOProgram->program;
 
     if(program.bind())
     {
-        program.setUniformValueArray("samples", &ssaoKernel[0], ssaoKernel.size());
+        qWarning("ssaoKernerl Size: %i", ssaoKernel.size());
+        program.setUniformValueArray("samples", &ssaoKernel[0], int(ssaoKernel.size()));
         program.setUniformValue("projection", camera->projectionMatrix);
 
         program.setUniformValue("width", width);
@@ -990,6 +997,8 @@ void DeferredRenderer::passSSAO(Camera* camera)
 
 void DeferredRenderer::passSSAOBlur(Camera* camera)
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     QOpenGLShaderProgram &program = SSAOBlur->program;
 
     if(program.bind())
