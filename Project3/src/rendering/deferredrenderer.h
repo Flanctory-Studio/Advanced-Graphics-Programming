@@ -51,6 +51,7 @@ private:
     GLuint outlineTexture = 0;
     GLuint gridTexture = 0;
     GLuint SSAOBlurTexture = 0;
+    GLuint fboWorldPos = 0;
 
     FramebufferObject *fboGeometry = nullptr;
     FramebufferObject *fboLight = nullptr;
