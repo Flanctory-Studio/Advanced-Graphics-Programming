@@ -111,8 +111,8 @@ void DeferredRenderer::initialize()
 
     SSAOBlur = resourceManager->createShaderProgram();
     SSAOBlur->name = "SSAO Blur Program";
-    SSAOBlur->vertexShaderFilename = "res/shaders/SSAOBlur.vert";
-    SSAOBlur->fragmentShaderFilename = "res/shaders/SSAOBlur.frag";
+    SSAOBlur->vertexShaderFilename = "res/shaders/ssao.vert";
+    SSAOBlur->fragmentShaderFilename = "res/shaders/ssao_blur.frag";
     SSAOBlur->includeForSerialization = false;
 
     // Create FBO
