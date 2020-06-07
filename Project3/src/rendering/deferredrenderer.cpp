@@ -492,12 +492,8 @@ void DeferredRenderer::resize(int w, int h)
     height = h;
 }
 
-void DeferredRenderer::render(Camera *camera)
+void DeferredRenderer::RenderGeometry()
 {
-    OpenGLErrorGuard guard(__FUNCTION__);
-
-
-//    gl->glEnable(GL_DEPTH_TEST);
     fboGeometry->bind();
 
     // Clear color
@@ -512,10 +508,11 @@ void DeferredRenderer::render(Camera *camera)
     {
         //TODO: APPLY RELIEF MAPPING EFFECT
     }
-
-//    gl->glDisable(GL_DEPTH_TEST);
     fboGeometry->release();
+}
 
+void DeferredRenderer::RenderOutline()
+{
     fboOutline->bind();
 
     // Clear color
@@ -527,7 +524,10 @@ void DeferredRenderer::render(Camera *camera)
     passOutline(camera);
 
     fboOutline->release();
+}
 
+void DeferredRenderer::RenderSSAO()
+{
     fboSSAO->bind();
 
     // Clear color
@@ -539,8 +539,10 @@ void DeferredRenderer::render(Camera *camera)
     passSSAO(camera);
 
     fboSSAO->release();
+}
 
-
+void DeferredRenderer::RenderLight()
+{
     fboLight->bind();
 
     // Clear color
@@ -557,7 +559,10 @@ void DeferredRenderer::render(Camera *camera)
     }
 
     fboLight->release();
+}
 
+void DeferredRenderer::RenderGrid()
+{
     fboGrid->bind();
 
     // Clear color
@@ -569,13 +574,10 @@ void DeferredRenderer::render(Camera *camera)
     passGrid(camera);
 
     fboGrid->release();
+}
 
-    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-    passBlit();
-
-    //Storage the new selection texture pixels
-
+void DeferredRenderer::StoreSelectionPixels()
+{
     fboGeometry->bind();
 
     gl->glReadBuffer(GL_COLOR_ATTACHMENT0 + 3);
@@ -587,9 +589,29 @@ void DeferredRenderer::render(Camera *camera)
 
     gl->glReadBuffer(0);
     fboGeometry->release();
+}
+
+void DeferredRenderer::render(Camera *camera)
+{
+    OpenGLErrorGuard guard(__FUNCTION__);
+
+    RenderGeometry();
+
+    RenderOutline();
+
+    RenderSSAO();
 
 
 
+    RenderLight();
+
+    RenderGrid();
+
+    gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    passBlit();
+
+    //Storage the new selection texture pixels
+    StoreSelectionPixels();
 }
 
 void DeferredRenderer::passMeshes(Camera *camera)
@@ -807,8 +829,6 @@ void DeferredRenderer::passLights(Camera *camera)
 
         program.setUniformValue("viewPos", camera->position);
         program.setUniformValue("backgroundColor", QVector3D(miscSettings->backgroundColor.redF(), miscSettings->backgroundColor.greenF(), miscSettings->backgroundColor.blueF()));
-
-        qWarning("Color de mierda: %f, %f, %f", miscSettings->backgroundColor.redF(), miscSettings->backgroundColor.greenF(), miscSettings->backgroundColor.blueF());
 
         program.setUniformValue("gPosition", 0);
         gl->glActiveTexture(GL_TEXTURE0);
