@@ -541,6 +541,21 @@ void DeferredRenderer::RenderSSAO()
     fboSSAO->release();
 }
 
+void DeferredRenderer::RenderSSAOBlur()
+{
+    SSAOBlurFBO->bind();
+
+    //Clear Color
+    gl->glClearDepth(1.0);
+    gl->glClearColor(0.0, 0.0, 0.0, 1.0);
+    gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    //SSAO Blur
+    passSSAOBlur(camera);
+
+    SSAOBlurFBO->release();
+}
+
 void DeferredRenderer::RenderLight()
 {
     fboLight->bind();
@@ -601,7 +616,7 @@ void DeferredRenderer::render(Camera *camera)
 
     RenderSSAO();
 
-
+    RenderSSAOBlur();
 
     RenderLight();
 
@@ -949,6 +964,21 @@ void DeferredRenderer::passSSAO(Camera* camera)
         gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
         gl->glActiveTexture(GL_TEXTURE2);
         gl->glBindTexture(GL_TEXTURE_2D, noiseTexture);
+
+        resourceManager->quad->submeshes[0]->draw();
+
+        program.release();
+    }
+}
+
+void DeferredRenderer::passSSAOBlur(Camera* camera)
+{
+    QOpenGLShaderProgram &program = SSAOBlur->program;
+
+    if(program.bind())
+    {
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, SSAOBlurTexture);
 
         resourceManager->quad->submeshes[0]->draw();
 
