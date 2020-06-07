@@ -53,38 +53,41 @@ float DeferredRenderer::Lerp(float a, float b, float f)
 
 void DeferredRenderer::GenerateSSAOTextures()
 {
-    // generate sample kernel
-    // ----------------------
-    std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
-    std::default_random_engine generator;
-    for (unsigned int i = 0; i < 64; ++i)
+    if(noiseTexture == 0)
     {
-        QVector3D sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
-        sample.normalize();
-        sample *= randomFloats(generator);
-        float scale = float(i) / 64.0;
+        // generate sample kernel
+        // ----------------------
+        std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
+        std::default_random_engine generator;
+        for (unsigned int i = 0; i < 64; ++i)
+        {
+            QVector3D sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
+            sample.normalize();
+            sample *= randomFloats(generator);
+            float scale = float(i) / 64.0;
 
-        // scale samples s.t. they're more aligned to center of kernel
-        scale = Lerp(0.1f, 1.0f, scale * scale);
-        sample *= scale;
-        ssaoKernel.push_back(sample);
-    }
+            // scale samples s.t. they're more aligned to center of kernel
+            scale = Lerp(0.1f, 1.0f, scale * scale);
+            sample *= scale;
+            ssaoKernel.push_back(sample);
+        }
 
-    // generate noise texture
-    // ----------------------
-    std::vector<QVector3D> ssaoNoise;
-    for (unsigned int i = 0; i < 16; i++)
-    {
-        QVector3D noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f); // rotate around z-axis (in tangent space)
-        ssaoNoise.push_back(noise);
+        // generate noise texture
+        // ----------------------
+        std::vector<QVector3D> ssaoNoise;
+        for (unsigned int i = 0; i < 16; i++)
+        {
+            QVector3D noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f); // rotate around z-axis (in tangent space)
+            ssaoNoise.push_back(noise);
+        }
+        gl->glGenTextures(1, &noiseTexture);
+        gl->glBindTexture(GL_TEXTURE_2D, noiseTexture);
+        gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
-    glGenTextures(1, &noiseTexture);
-    glBindTexture(GL_TEXTURE_2D, noiseTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
 
 DeferredRenderer::DeferredRenderer() :
@@ -109,9 +112,6 @@ DeferredRenderer::DeferredRenderer() :
     addTexture("SSAO");
 
     rendererType = RendererType::DEFERRED;
-
-
-    GenerateSSAOTextures();
 }
 
 DeferredRenderer::~DeferredRenderer()
@@ -478,6 +478,8 @@ void DeferredRenderer::GenerateSSAOBlurFBO(int w, int h)
 void DeferredRenderer::resize(int w, int h)
 {
     OpenGLErrorGuard guard(__FUNCTION__);
+
+    GenerateSSAOTextures();
 
     // Regenerate render targets
 
@@ -873,6 +875,88 @@ void DeferredRenderer::passLights(Camera *camera)
         gl->glEnable(GL_DEPTH_TEST);
 }
 
+
+void DeferredRenderer::passGrid(Camera *camera)
+{
+    OpenGLErrorGuard guard(__FUNCTION__);
+
+    QOpenGLShaderProgram &program = gridProgram->program;
+
+    if(program.bind())
+    {
+        QVector4D cameraParameters = camera->getLeftRightBottomTop();
+        program.setUniformValue("left", cameraParameters.x());
+        program.setUniformValue("right", cameraParameters.y());
+        program.setUniformValue("bottom", cameraParameters.z());
+        program.setUniformValue("top", cameraParameters.w());
+        program.setUniformValue("znear", camera->znear);
+
+        program.setUniformValue("worldMatrix", camera->worldMatrix);
+        program.setUniformValue("viewlatrix", camera->viewMatrix);
+
+        program.setUniformValue("drawGrid", miscSettings->renderGrid) ;
+
+        program.setUniformValue("worldPos", 0);
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, fboWorldPos);
+
+        program.setUniformValue("finalText", 1);
+        gl->glActiveTexture(GL_TEXTURE1);
+        gl->glBindTexture(GL_TEXTURE_2D, fboFinal);
+
+        resourceManager->quad->submeshes[0]->draw();
+
+        program.release();
+    }
+}
+
+void DeferredRenderer::passSSAO(Camera* camera)
+{
+    OpenGLErrorGuard guard(__FUNCTION__);
+
+    QOpenGLShaderProgram &program = SSAOProgram->program;
+
+    if(program.bind())
+    {
+        program.setUniformValueArray("samples", &ssaoKernel[0], int(ssaoKernel.size()));
+        program.setUniformValue("projection", camera->projectionMatrix);
+
+        program.setUniformValue("width", float(width));
+        program.setUniformValue("height", float(height));
+
+        program.setUniformValue("gPosition", 0);
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, fboWorldPos);
+        program.setUniformValue("gNormal", 1);
+        gl->glActiveTexture(GL_TEXTURE1);
+        gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
+        program.setUniformValue("texNoise", 2);
+        gl->glActiveTexture(GL_TEXTURE2);
+        gl->glBindTexture(GL_TEXTURE_2D, noiseTexture);
+
+        resourceManager->quad->submeshes[0]->draw();
+
+        program.release();
+    }
+}
+
+void DeferredRenderer::passSSAOBlur(Camera* camera)
+{
+    OpenGLErrorGuard guard(__FUNCTION__);
+
+    QOpenGLShaderProgram &program = SSAOBlur->program;
+
+    if(program.bind())
+    {
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, SSAOBlurTexture);
+
+        resourceManager->quad->submeshes[0]->draw();
+
+        program.release();
+    }
+}
+
 void DeferredRenderer::passBlit()
 {
     OpenGLErrorGuard guard(__FUNCTION__);
@@ -930,84 +1014,3 @@ void DeferredRenderer::passBlit()
     gl->glEnable(GL_DEPTH_TEST);
 }
 
-void DeferredRenderer::passGrid(Camera *camera)
-{
-    OpenGLErrorGuard guard(__FUNCTION__);
-
-    QOpenGLShaderProgram &program = gridProgram->program;
-
-    if(program.bind())
-    {
-        QVector4D cameraParameters = camera->getLeftRightBottomTop();
-        program.setUniformValue("left", cameraParameters.x());
-        program.setUniformValue("right", cameraParameters.y());
-        program.setUniformValue("bottom", cameraParameters.z());
-        program.setUniformValue("top", cameraParameters.w());
-        program.setUniformValue("znear", camera->znear);
-
-        program.setUniformValue("worldMatrix", camera->worldMatrix);
-        program.setUniformValue("viewlatrix", camera->viewMatrix);
-
-        program.setUniformValue("drawGrid", miscSettings->renderGrid) ;
-
-        program.setUniformValue("worldPos", 0);
-        gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, fboWorldPos);
-
-        program.setUniformValue("finalText", 1);
-        gl->glActiveTexture(GL_TEXTURE1);
-        gl->glBindTexture(GL_TEXTURE_2D, fboFinal);
-
-        resourceManager->quad->submeshes[0]->draw();
-
-        program.release();
-    }
-}
-
-void DeferredRenderer::passSSAO(Camera* camera)
-{
-    OpenGLErrorGuard guard(__FUNCTION__);
-
-    QOpenGLShaderProgram &program = SSAOProgram->program;
-
-    if(program.bind())
-    {
-        qWarning("ssaoKernerl Size: %i", ssaoKernel.size());
-        program.setUniformValueArray("samples", &ssaoKernel[0], int(ssaoKernel.size()));
-        program.setUniformValue("projection", camera->projectionMatrix);
-
-        program.setUniformValue("width", width);
-        program.setUniformValue("height", height);
-
-        program.setUniformValue("gPosition", 0);
-        gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
-        program.setUniformValue("gNormal", 1);
-        gl->glActiveTexture(GL_TEXTURE1);
-        gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
-        program.setUniformValue("texNoise", 2);
-        gl->glActiveTexture(GL_TEXTURE2);
-        gl->glBindTexture(GL_TEXTURE_2D, noiseTexture);
-
-        resourceManager->quad->submeshes[0]->draw();
-
-        program.release();
-    }
-}
-
-void DeferredRenderer::passSSAOBlur(Camera* camera)
-{
-    OpenGLErrorGuard guard(__FUNCTION__);
-
-    QOpenGLShaderProgram &program = SSAOBlur->program;
-
-    if(program.bind())
-    {
-        gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, SSAOBlurTexture);
-
-        resourceManager->quad->submeshes[0]->draw();
-
-        program.release();
-    }
-}
