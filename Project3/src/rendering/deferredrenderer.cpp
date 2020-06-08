@@ -664,7 +664,7 @@ void DeferredRenderer::render(Camera *camera)
     gl->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     passBlit();
 
-    //Storage the new selection texture pixels
+    //Store the new selection texture pixels
     StoreSelectionPixels();
 }
 
@@ -704,12 +704,11 @@ void DeferredRenderer::passMeshes(Camera *camera)
 
             if (mesh != nullptr)
             {
-                QMatrix4x4 worldMatrix = meshRenderer->entity->transform->matrix();
-                QMatrix4x4 worldViewMatrix = camera->viewMatrix * worldMatrix;
-                QMatrix3x3 normalMatrix = worldViewMatrix.normalMatrix();
+                QMatrix4x4 modelMatrix = meshRenderer->entity->transform->matrix();
+                QMatrix3x3 normalMatrix = (camera->viewMatrix * modelMatrix).normalMatrix();
 
-                program.setUniformValue("worldMatrix", worldMatrix);
-                program.setUniformValue("worldViewMatrix", worldViewMatrix);
+                program.setUniformValue("modelMatrix", modelMatrix);
+                program.setUniformValue("viewMatrix", camera->viewMatrix);
                 program.setUniformValue("normalMatrix", normalMatrix);
                 program.setUniformValue("uWorldPos", meshRenderer->entity->transform->position);
                 program.setUniformValue("modelMatrix", meshRenderer->entity->transform->matrix());
