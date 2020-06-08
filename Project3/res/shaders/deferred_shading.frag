@@ -10,6 +10,8 @@ in vec2 vTexCoords;
 in vec3 vNormal;
 in vec3 pos;
 in vec4 worldPos;
+in vec3 mPos;
+in vec3 mNormal;
 
 layout (location = 0) out vec4 outPosition;
 layout (location = 1) out vec4 outNormals;
@@ -17,6 +19,8 @@ layout (location = 2) out vec4 outAlbedo;
 layout (location = 3) out vec4 outSelection;
 layout (location = 4) out vec4 outWorldPos;
 layout (location = 5) out vec4 fragmentdepth;
+layout (location = 6) out vec4 outMPosition;
+layout (location = 7) out vec4 outMNormals;
 
 float LinearizeDepth(float depth)
 {
@@ -37,4 +41,7 @@ void main(void)
     fragmentdepth = vec4(vec3(depth), 1.0);
 
     outWorldPos = worldPos;
+
+    outMPosition = vec4(mPos, 1.0);
+    outMNormals = vec4(normalize(mNormal), 1.0);
 }
