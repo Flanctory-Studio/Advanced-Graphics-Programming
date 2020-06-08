@@ -712,6 +712,7 @@ void DeferredRenderer::passMeshes(Camera *camera)
                 program.setUniformValue("worldViewMatrix", worldViewMatrix);
                 program.setUniformValue("normalMatrix", normalMatrix);
                 program.setUniformValue("uWorldPos", meshRenderer->entity->transform->position);
+                program.setUniformValue("modelMatrix", meshRenderer->entity->transform->matrix());
 
                 int materialIndex = 0;
                 for (auto submesh : mesh->submeshes)
