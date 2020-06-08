@@ -53,45 +53,48 @@ float DeferredRenderer::Lerp(float a, float b, float f)
 
 void DeferredRenderer::GenerateSSAOTextures()
 {
-    // generate sample kernel
-    // ----------------------
-    std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
-    std::default_random_engine generator;
-    for (unsigned int i = 0; i < 64; ++i)
+    if(noiseTexture == 0)
     {
-        QVector3D sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
-        sample.normalize();
-        sample *= randomFloats(generator);
-        float scale = float(i) / 64.0;
+        // generate sample kernel
+        // ----------------------
+        std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
+        std::default_random_engine generator;
+        for (unsigned int i = 0; i < 64; ++i)
+        {
+            QVector3D sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
+            sample.normalize();
+            sample *= randomFloats(generator);
+            float scale = float(i) / 64.0;
 
-        // scale samples s.t. they're more aligned to center of kernel
-        scale = Lerp(0.1f, 1.0f, scale * scale);
-        sample *= scale;
-        ssaoKernel.push_back(sample);
-    }
+            // scale samples s.t. they're more aligned to center of kernel
+            scale = Lerp(0.1f, 1.0f, scale * scale);
+            sample *= scale;
+            ssaoKernel.push_back(sample);
+        }
 
-    // generate noise texture
-    // ----------------------
-    std::vector<QVector3D> ssaoNoise;
-    for (unsigned int i = 0; i < 16; i++)
-    {
-        QVector3D noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f); // rotate around z-axis (in tangent space)
-        ssaoNoise.push_back(noise);
+        // generate noise texture
+        // ----------------------
+        std::vector<QVector3D> ssaoNoise;
+        for (unsigned int i = 0; i < 16; i++)
+        {
+            QVector3D noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f); // rotate around z-axis (in tangent space)
+            ssaoNoise.push_back(noise);
+        }
+        gl->glGenTextures(1, &noiseTexture);
+        gl->glBindTexture(GL_TEXTURE_2D, noiseTexture);
+        gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
-    glGenTextures(1, &noiseTexture);
-    glBindTexture(GL_TEXTURE_2D, noiseTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
 
 DeferredRenderer::DeferredRenderer() :
-    fboPosition(QOpenGLTexture::Target2D),
-    fboFinal(QOpenGLTexture::Target2D),
-    fboDepth(QOpenGLTexture::Target2D),
-    selectionTexture(QOpenGLTexture::Target2D)
+    texturePosition(QOpenGLTexture::Target2D),
+    textureFinal(QOpenGLTexture::Target2D),
+    textureDepth(QOpenGLTexture::Target2D),
+    textureSelection(QOpenGLTexture::Target2D)
 {
     fboGeometry = nullptr;
     fboLight = nullptr;
@@ -99,7 +102,9 @@ DeferredRenderer::DeferredRenderer() :
     // List of textures
     addTexture("Final");
     addTexture("Position");
+    addTexture("Model Position");
     addTexture("Normals");
+    addTexture("Model Normals");
     addTexture("Albedo");
     addTexture("Depth");
     addTexture("Selection");
@@ -109,9 +114,6 @@ DeferredRenderer::DeferredRenderer() :
     addTexture("SSAO");
 
     rendererType = RendererType::DEFERRED;
-
-
-    GenerateSSAOTextures();
 }
 
 DeferredRenderer::~DeferredRenderer()
@@ -157,11 +159,11 @@ void DeferredRenderer::initialize()
     gridProgram->fragmentShaderFilename = "res/shaders/grid.frag";
     gridProgram->includeForSerialization = false;
 
-   SSAOProgram = resourceManager->createShaderProgram();
-   SSAOProgram->name = "SSAO Program";
-   SSAOProgram->vertexShaderFilename = "res/shaders/ssao.vert";
-   SSAOProgram->fragmentShaderFilename = "res/shaders/ssao.frag";
-   SSAOProgram->includeForSerialization = false;
+    SSAOProgram = resourceManager->createShaderProgram();
+    SSAOProgram->name = "SSAO Program";
+    SSAOProgram->vertexShaderFilename = "res/shaders/ssao.vert";
+    SSAOProgram->fragmentShaderFilename = "res/shaders/ssao.frag";
+    SSAOProgram->includeForSerialization = false;
 
     SSAOBlur = resourceManager->createShaderProgram();
     SSAOBlur->name = "SSAO Blur Program";
@@ -214,9 +216,19 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
 {
     OpenGLErrorGuard guard(__FUNCTION__);
 
-    if (fboPosition != 0) gl->glDeleteTextures(1, &fboPosition);
-    gl->glGenTextures(1, &fboPosition);
-    gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
+    if (texturePosition != 0) gl->glDeleteTextures(1, &texturePosition);
+    gl->glGenTextures(1, &texturePosition);
+    gl->glBindTexture(GL_TEXTURE_2D, texturePosition);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+    if (textureNormal != 0) gl->glDeleteTextures(1, &textureNormal);
+    gl->glGenTextures(1, &textureNormal);
+    gl->glBindTexture(GL_TEXTURE_2D, textureNormal);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -224,9 +236,9 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
-    if (fboNormal != 0) gl->glDeleteTextures(1, &fboNormal);
-    gl->glGenTextures(1, &fboNormal);
-    gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
+    if (textureAlbedo != 0) gl->glDeleteTextures(1, &textureAlbedo);
+    gl->glGenTextures(1, &textureAlbedo);
+    gl->glBindTexture(GL_TEXTURE_2D, textureAlbedo);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -234,9 +246,9 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
-    if (fboAlbedo != 0) gl->glDeleteTextures(1, &fboAlbedo);
-    gl->glGenTextures(1, &fboAlbedo);
-    gl->glBindTexture(GL_TEXTURE_2D, fboAlbedo);
+    if (textureSelection != 0) gl->glDeleteTextures(1, &textureSelection);
+    gl->glGenTextures(1, &textureSelection);
+    gl->glBindTexture(GL_TEXTURE_2D, textureSelection);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -244,9 +256,9 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
-    if (selectionTexture != 0) gl->glDeleteTextures(1, &selectionTexture);
-    gl->glGenTextures(1, &selectionTexture);
-    gl->glBindTexture(GL_TEXTURE_2D, selectionTexture);
+    if (textureDepth != 0) gl->glDeleteTextures(1, &textureDepth);
+    gl->glGenTextures(1, &textureDepth);
+    gl->glBindTexture(GL_TEXTURE_2D, textureDepth);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -254,25 +266,35 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
-    if (fboDepth != 0) gl->glDeleteTextures(1, &fboDepth);
-    gl->glGenTextures(1, &fboDepth);
-    gl->glBindTexture(GL_TEXTURE_2D, fboDepth);
+    if (textureWorldPos != 0) gl->glDeleteTextures(1, &textureWorldPos);
+    gl->glGenTextures(1, &textureWorldPos);
+    gl->glBindTexture(GL_TEXTURE_2D, textureWorldPos);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
-    if (fboWorldPos != 0) gl->glDeleteTextures(1, &fboWorldPos);
-    gl->glGenTextures(1, &fboWorldPos);
-    gl->glBindTexture(GL_TEXTURE_2D, fboWorldPos);
+    if (textureMPosition != 0) gl->glDeleteTextures(1, &textureMPosition);
+    gl->glGenTextures(1, &textureMPosition);
+    gl->glBindTexture(GL_TEXTURE_2D, textureMPosition);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+    if (textureMNormals != 0) gl->glDeleteTextures(1, &textureMNormals);
+    gl->glGenTextures(1, &textureMNormals);
+    gl->glBindTexture(GL_TEXTURE_2D, textureMNormals);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
     if (depthAttachment != 0) gl->glDeleteTextures(1, &depthAttachment);
     gl->glGenTextures(1, &depthAttachment);
@@ -297,16 +319,20 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
         GL_COLOR_ATTACHMENT2,
         GL_COLOR_ATTACHMENT3,
         GL_COLOR_ATTACHMENT4,
-        GL_COLOR_ATTACHMENT5
+        GL_COLOR_ATTACHMENT5,
+        GL_COLOR_ATTACHMENT6,
+        GL_COLOR_ATTACHMENT7,
     };
-    gl->glDrawBuffers(6, buffs);
+    gl->glDrawBuffers(8, buffs);
 
-    fboGeometry->addColorAttachment(0, fboPosition);
-    fboGeometry->addColorAttachment(1, fboNormal);
-    fboGeometry->addColorAttachment(2, fboAlbedo);
-    fboGeometry->addColorAttachment(3, selectionTexture);
-    fboGeometry->addColorAttachment(4, fboWorldPos);
-    fboGeometry->addColorAttachment(5, fboDepth);
+    fboGeometry->addColorAttachment(0, texturePosition);
+    fboGeometry->addColorAttachment(1, textureNormal);
+    fboGeometry->addColorAttachment(2, textureAlbedo);
+    fboGeometry->addColorAttachment(3, textureSelection);
+    fboGeometry->addColorAttachment(4, textureWorldPos);
+    fboGeometry->addColorAttachment(5, textureDepth);
+    fboGeometry->addColorAttachment(6, textureMNormals);
+    fboGeometry->addColorAttachment(7, textureMPosition);
     fboGeometry->addDepthAttachment(depthAttachment);
     fboGeometry->checkStatus();
     fboGeometry->release();
@@ -316,15 +342,15 @@ void DeferredRenderer::GenerateLightFBO(int w, int h)
 {
     OpenGLErrorGuard guard(__FUNCTION__);
 
-    if (fboFinal == 0) gl->glDeleteTextures(1, &fboFinal);
-    gl->glGenTextures(1, &fboFinal);
-    gl->glBindTexture(GL_TEXTURE_2D, fboFinal);
+    if (textureFinal == 0) gl->glDeleteTextures(1, &textureFinal);
+    gl->glGenTextures(1, &textureFinal);
+    gl->glBindTexture(GL_TEXTURE_2D, textureFinal);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
     glBindTexture(GL_TEXTURE_2D,0);
 
@@ -339,7 +365,7 @@ void DeferredRenderer::GenerateLightFBO(int w, int h)
     };
     gl->glDrawBuffers(1, buffs);
 
-    fboLight->addColorAttachment(0, fboFinal);
+    fboLight->addColorAttachment(0, textureFinal);
     fboLight->checkStatus();
     fboLight->release();
 }
@@ -348,9 +374,9 @@ void DeferredRenderer::GenerateOutlineFBO(int w, int h)
 {
     OpenGLErrorGuard guard(__FUNCTION__);
 
-    if (outlineTexture != 0) gl->glDeleteTextures(1, &outlineTexture);
-    gl->glGenTextures(1, &outlineTexture);
-    gl->glBindTexture(GL_TEXTURE_2D, outlineTexture);
+    if (textureOutline != 0) gl->glDeleteTextures(1, &textureOutline);
+    gl->glGenTextures(1, &textureOutline);
+    gl->glBindTexture(GL_TEXTURE_2D, textureOutline);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -370,7 +396,7 @@ void DeferredRenderer::GenerateOutlineFBO(int w, int h)
     };
     gl->glDrawBuffers(1, buffs);
 
-    fboOutline->addColorAttachment(0, outlineTexture);
+    fboOutline->addColorAttachment(0, textureOutline);
     fboOutline->checkStatus();
     fboOutline->release();
 }
@@ -379,15 +405,15 @@ void DeferredRenderer::GenerateGridFBO(int w, int h)
 {
     OpenGLErrorGuard guard(__FUNCTION__);
 
-    if (gridTexture != 0) gl->glDeleteTextures(1, &gridTexture);
-    gl->glGenTextures(1, &gridTexture);
-    gl->glBindTexture(GL_TEXTURE_2D, gridTexture);
+    if (textureGrid != 0) gl->glDeleteTextures(1, &textureGrid);
+    gl->glGenTextures(1, &textureGrid);
+    gl->glBindTexture(GL_TEXTURE_2D, textureGrid);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
     glBindTexture(GL_TEXTURE_2D,0);
 
@@ -408,7 +434,7 @@ void DeferredRenderer::GenerateGridFBO(int w, int h)
 //    state.blendFuncDst = GL_ONE_MINUS_SRC_ALPHA;
 //    state.apply();
 
-    fboGrid->addColorAttachment(0, gridTexture);
+    fboGrid->addColorAttachment(0, textureGrid);
     fboGrid->checkStatus();
     fboGrid->release();
 }
@@ -425,7 +451,7 @@ void DeferredRenderer::GenerateSSAOFBO(int w, int h)
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
     glBindTexture(GL_TEXTURE_2D,0);
 
@@ -448,15 +474,15 @@ void DeferredRenderer::GenerateSSAOBlurFBO(int w, int h)
 {
     OpenGLErrorGuard guard(__FUNCTION__);
 
-    if (SSAOBlurTexture != 0) gl->glDeleteTextures(1, &SSAOBlurTexture);
-    gl->glGenTextures(1, &SSAOBlurTexture);
-    gl->glBindTexture(GL_TEXTURE_2D, SSAOBlurTexture);
+    if (textureSSAOBlur != 0) gl->glDeleteTextures(1, &textureSSAOBlur);
+    gl->glGenTextures(1, &textureSSAOBlur);
+    gl->glBindTexture(GL_TEXTURE_2D, textureSSAOBlur);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
     glBindTexture(GL_TEXTURE_2D,0);
 
@@ -470,7 +496,7 @@ void DeferredRenderer::GenerateSSAOBlurFBO(int w, int h)
     };
     gl->glDrawBuffers(1, buffs);
 
-    SSAOBlurFBO->addColorAttachment(0, SSAOBlurTexture);
+    SSAOBlurFBO->addColorAttachment(0, textureSSAOBlur);
     SSAOBlurFBO->checkStatus();
     SSAOBlurFBO->release();
 }
@@ -478,6 +504,8 @@ void DeferredRenderer::GenerateSSAOBlurFBO(int w, int h)
 void DeferredRenderer::resize(int w, int h)
 {
     OpenGLErrorGuard guard(__FUNCTION__);
+
+    GenerateSSAOTextures();
 
     // Regenerate render targets
 
@@ -562,7 +590,7 @@ void DeferredRenderer::RenderSSAOBlur(Camera *camera)
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //SSAO Blur
-    passSSAOBlur(camera);
+    passSSAOBlur();
 
     SSAOBlurFBO->release();
 }
@@ -683,6 +711,7 @@ void DeferredRenderer::passMeshes(Camera *camera)
                 program.setUniformValue("viewMatrix", camera->viewMatrix);
                 program.setUniformValue("normalMatrix", normalMatrix);
                 program.setUniformValue("uWorldPos", meshRenderer->entity->transform->position);
+                program.setUniformValue("modelMatrix", meshRenderer->entity->transform->matrix());
 
                 int materialIndex = 0;
                 for (auto submesh : mesh->submeshes)
@@ -817,7 +846,6 @@ void DeferredRenderer::passLights(Camera *camera)
 
     gl->glDisable(GL_DEPTH_TEST);
 
-
     QOpenGLShaderProgram &program = deferredLight->program;
 
     if(program.bind())
@@ -857,13 +885,13 @@ void DeferredRenderer::passLights(Camera *camera)
 
         program.setUniformValue("gPosition", 0);
         gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
+        gl->glBindTexture(GL_TEXTURE_2D, texturePosition);
         program.setUniformValue("gNormal", 1);
         gl->glActiveTexture(GL_TEXTURE1);
-        gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
+        gl->glBindTexture(GL_TEXTURE_2D, textureNormal);
         program.setUniformValue("gAlbedoSpec", 2);
         gl->glActiveTexture(GL_TEXTURE2);
-        gl->glBindTexture(GL_TEXTURE_2D, fboAlbedo);
+        gl->glBindTexture(GL_TEXTURE_2D, textureAlbedo);
 
         resourceManager->quad->submeshes[0]->draw();
 
@@ -873,63 +901,11 @@ void DeferredRenderer::passLights(Camera *camera)
         gl->glEnable(GL_DEPTH_TEST);
 }
 
-void DeferredRenderer::passBlit()
-{
-    gl->glDisable(GL_DEPTH_TEST);
-
-    QOpenGLShaderProgram &program = blitProgram->program;
-
-    if (program.bind())
-    {
-        program.setUniformValue("colorTexture", 0);
-        gl->glActiveTexture(GL_TEXTURE0);
-
-        if (shownTexture() == "Final") {
-            gl->glBindTexture(GL_TEXTURE_2D, gridTexture);
-        }
-        else if (shownTexture() == "Position") {
-            gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
-        }
-        else if (shownTexture() == "Normals") {
-            gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
-        }
-
-        else if (shownTexture() == "Albedo") {
-            gl->glBindTexture(GL_TEXTURE_2D, fboAlbedo);
-        }
-        else if (shownTexture() == "Depth") {
-            gl->glBindTexture(GL_TEXTURE_2D, fboDepth);
-        }
-        else if(shownTexture() == "Selection") {
-            gl->glBindTexture(GL_TEXTURE_2D, selectionTexture);
-        }
-        else if(shownTexture() == "Outline") {
-            gl->glBindTexture(GL_TEXTURE_2D, outlineTexture);
-        }
-        else if(shownTexture() == "SSAO") {
-            gl->glBindTexture(GL_TEXTURE_2D, textureSSAO);
-        }
-
-        program.setUniformValue("outlineTexture", 1);
-        gl->glActiveTexture(GL_TEXTURE1);
-        gl->glBindTexture(GL_TEXTURE_2D, outlineTexture);
-
-        double r, g, b;
-        miscSettings->outlineColor.getRgbF(&r, &g, &b);
-
-        program.setUniformValue("outlineColor", QVector3D(r, g, b));
-        program.setUniformValue("outlineWidth", float(miscSettings->outlineWidth));
-
-        resourceManager->quad->submeshes[0]->draw();
-        program.release();
-    }
-
-    gl->glBindTexture(GL_TEXTURE_2D, 0);
-    gl->glEnable(GL_DEPTH_TEST);
-}
 
 void DeferredRenderer::passGrid(Camera *camera)
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     QOpenGLShaderProgram &program = gridProgram->program;
 
     if(program.bind())
@@ -948,11 +924,11 @@ void DeferredRenderer::passGrid(Camera *camera)
 
         program.setUniformValue("worldPos", 0);
         gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, fboWorldPos);
+        gl->glBindTexture(GL_TEXTURE_2D, textureWorldPos);
 
         program.setUniformValue("finalText", 1);
         gl->glActiveTexture(GL_TEXTURE1);
-        gl->glBindTexture(GL_TEXTURE_2D, fboFinal);
+        gl->glBindTexture(GL_TEXTURE_2D, textureFinal);
 
         resourceManager->quad->submeshes[0]->draw();
 
@@ -962,16 +938,25 @@ void DeferredRenderer::passGrid(Camera *camera)
 
 void DeferredRenderer::passSSAO(Camera* camera)
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     QOpenGLShaderProgram &program = SSAOProgram->program;
 
     if(program.bind())
     {
-        program.setUniformValueArray("samples", &ssaoKernel[0], ssaoKernel.size());
+        program.setUniformValueArray("samples", &ssaoKernel[0], int(ssaoKernel.size()));
         program.setUniformValue("projection", camera->projectionMatrix);
+
+        program.setUniformValue("width", float(width));
+        program.setUniformValue("height", float(height));
+
+        program.setUniformValue("gPosition", 0);
         gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, fboPosition);
+        gl->glBindTexture(GL_TEXTURE_2D, texturePosition);
+        program.setUniformValue("gNormal", 1);
         gl->glActiveTexture(GL_TEXTURE1);
-        gl->glBindTexture(GL_TEXTURE_2D, fboNormal);
+        gl->glBindTexture(GL_TEXTURE_2D, textureNormal);
+        program.setUniformValue("texNoise", 2);
         gl->glActiveTexture(GL_TEXTURE2);
         gl->glBindTexture(GL_TEXTURE_2D, noiseTexture);
 
@@ -981,17 +966,83 @@ void DeferredRenderer::passSSAO(Camera* camera)
     }
 }
 
-void DeferredRenderer::passSSAOBlur(Camera* camera)
+void DeferredRenderer::passSSAOBlur()
 {
+    OpenGLErrorGuard guard(__FUNCTION__);
+
     QOpenGLShaderProgram &program = SSAOBlur->program;
 
     if(program.bind())
     {
         gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, SSAOBlurTexture);
+        gl->glBindTexture(GL_TEXTURE_2D, textureSSAOBlur);
 
         resourceManager->quad->submeshes[0]->draw();
 
         program.release();
     }
 }
+
+void DeferredRenderer::passBlit()
+{
+    OpenGLErrorGuard guard(__FUNCTION__);
+
+    gl->glDisable(GL_DEPTH_TEST);
+
+    QOpenGLShaderProgram &program = blitProgram->program;
+
+    if (program.bind())
+    {
+        program.setUniformValue("colorTexture", 0);
+        gl->glActiveTexture(GL_TEXTURE0);
+
+        if (shownTexture() == "Final") {
+            gl->glBindTexture(GL_TEXTURE_2D, textureGrid);
+        }
+        else if (shownTexture() == "Position") {
+            gl->glBindTexture(GL_TEXTURE_2D, texturePosition);
+        }
+        else if (shownTexture() == "Normals") {
+            gl->glBindTexture(GL_TEXTURE_2D, textureNormal);
+        }
+
+        else if (shownTexture() == "Albedo") {
+            gl->glBindTexture(GL_TEXTURE_2D, textureAlbedo);
+        }
+        else if (shownTexture() == "Depth") {
+            gl->glBindTexture(GL_TEXTURE_2D, textureDepth);
+        }
+        else if(shownTexture() == "Selection") {
+            gl->glBindTexture(GL_TEXTURE_2D, textureSelection);
+        }
+        else if(shownTexture() == "Outline") {
+            gl->glBindTexture(GL_TEXTURE_2D, textureOutline);
+        }
+        else if(shownTexture() == "SSAO") {
+            gl->glBindTexture(GL_TEXTURE_2D, textureSSAO);
+        }
+        else if(shownTexture() == "Model Position") {
+            gl->glBindTexture(GL_TEXTURE_2D, textureMPosition);
+        }
+        else if(shownTexture() == "Model Normals") {
+            gl->glBindTexture(GL_TEXTURE_2D, textureMNormals);
+        }
+
+        program.setUniformValue("outlineTexture", 1);
+        gl->glActiveTexture(GL_TEXTURE1);
+        gl->glBindTexture(GL_TEXTURE_2D, textureOutline);
+
+        double r, g, b;
+        miscSettings->outlineColor.getRgbF(&r, &g, &b);
+
+        program.setUniformValue("outlineColor", QVector3D(r, g, b));
+        program.setUniformValue("outlineWidth", float(miscSettings->outlineWidth));
+
+        resourceManager->quad->submeshes[0]->draw();
+        program.release();
+    }
+
+    gl->glBindTexture(GL_TEXTURE_2D, 0);
+    gl->glEnable(GL_DEPTH_TEST);
+}
+

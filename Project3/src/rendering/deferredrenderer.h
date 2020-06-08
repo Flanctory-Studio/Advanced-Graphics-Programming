@@ -34,7 +34,7 @@ private:
     void passOutline(Camera *camera);
     void passGrid(Camera *camera);
     void passSSAO(Camera *camera);
-    void passSSAOBlur(Camera* camera);
+    void passSSAOBlur();
     void passBlit();
 
     float Lerp(float a, float b, float f);
@@ -59,18 +59,21 @@ private:
     ShaderProgram* SSAOProgram = nullptr;
     ShaderProgram *SSAOBlur = nullptr;
 
-    GLuint fboPosition = 0;
-    GLuint fboNormal = 0;
-    GLuint fboAlbedo = 0;
-    GLuint fboFinal = 0;
-    GLuint fboDepth = 0;
-    GLuint depthAttachment = 0;
-    GLuint selectionTexture = 0;
-    GLuint outlineTexture = 0;
-    GLuint gridTexture = 0;
-    GLuint SSAOBlurTexture = 0;
-    GLuint fboWorldPos = 0;
+    GLuint texturePosition = 0;
+    GLuint textureNormal = 0;
+    GLuint textureAlbedo = 0;
+    GLuint textureFinal = 0;
+    GLuint textureDepth = 0;
+    GLuint textureSelection = 0;
+    GLuint textureOutline = 0;
+    GLuint textureGrid = 0;
+    GLuint textureSSAOBlur = 0;
+    GLuint textureWorldPos = 0;
     GLuint textureSSAO = 0;
+    GLuint textureMPosition = 0;
+    GLuint textureMNormals = 0;
+
+    GLuint depthAttachment = 0;
 
     FramebufferObject *fboGeometry = nullptr;
     FramebufferObject *fboLight = nullptr;
