@@ -7,7 +7,7 @@ layout(location=3) in vec3 tangent;
 layout(location=4) in vec3 bitangent;
 
 uniform mat4 viewMatrix;
-uniform mat4 normalMatrix;
+uniform mat3 normalMatrix;
 uniform mat4 modelMatrix;
 uniform mat4 projectionMatrix;
 uniform vec3 uWorldPos;
@@ -23,14 +23,13 @@ void main(void)
 {
     vTexCoords = texCoords;
     vNormal = normal;
-    pos = (projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0)).xyz;
-    worldPos = vec4(uWorldPos + position, 1.0);
-    gl_Position = projectionMatrix * worldViewMatrix * vec4(position, 1);
+    pos = (vec4(position, 1.0)).xyz;
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
+    worldPos = modelMatrix * vec4(position, 1.0);
 
 
     // SSAO input textures
-    vec4 mPos = viewMatrix * modelMatrix * vec4(position, 1.0);
+    mPos = (viewMatrix * modelMatrix * vec4(position, 1.0)).xyz;
 
-    mat3 normalMatrix = transpose(inverse(mat3(viewMatrix * modelMatrix)));
     mNormal = normalMatrix * normal;
 }

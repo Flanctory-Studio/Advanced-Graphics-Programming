@@ -25,7 +25,7 @@ void main()
     vec2 noiseScale = vec2(width/4.0, height/4.0);
 
     vec3 fragPos = texture(gPosition, vTexCoords).xyz;
-    vec3 normal = normalize(texture(gNormal, vTexCoords).rgb);
+    vec3 normal = (texture(gNormal, vTexCoords).rgb);
     vec3 randomVec = normalize(texture(texNoise, vTexCoords * noiseScale).xyz);
 
     vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));

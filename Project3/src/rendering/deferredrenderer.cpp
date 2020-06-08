@@ -331,8 +331,8 @@ void DeferredRenderer::GenerateGeometryFBO(int w, int h)
     fboGeometry->addColorAttachment(3, textureSelection);
     fboGeometry->addColorAttachment(4, textureWorldPos);
     fboGeometry->addColorAttachment(5, textureDepth);
-    fboGeometry->addColorAttachment(6, textureMNormals);
-    fboGeometry->addColorAttachment(7, textureMPosition);
+    fboGeometry->addColorAttachment(6, textureMPosition);
+    fboGeometry->addColorAttachment(7, textureMNormals);
     fboGeometry->addDepthAttachment(depthAttachment);
     fboGeometry->checkStatus();
     fboGeometry->release();
@@ -705,9 +705,10 @@ void DeferredRenderer::passMeshes(Camera *camera)
 
                 program.setUniformValue("viewMatrix", camera->viewMatrix);
                 program.setUniformValue("normalMatrix", normalMatrix);
-                program.setUniformValue("uWorldPos", meshRenderer->entity->transform->position);
                 program.setUniformValue("modelMatrix", meshRenderer->entity->transform->matrix());
                 program.setUniformValue("projectionMatrix", camera->projectionMatrix);
+
+                program.setUniformValue("uWorldPos", meshRenderer->entity->transform->position);
 
                 int materialIndex = 0;
                 for (auto submesh : mesh->submeshes)
@@ -747,32 +748,6 @@ void DeferredRenderer::passMeshes(Camera *camera)
                     SEND_TEXTURE("specularTexture", material->specularTexture, resourceManager->texBlack, 2);
                     SEND_TEXTURE("normalTexture", material->normalsTexture, resourceManager->texNormal, 3);
                     SEND_TEXTURE("bumpTexture", material->bumpTexture, resourceManager->texWhite, 4);
-
-                    submesh->draw();
-                }
-            }
-        }
-
-        // Light spheres
-        if (miscSettings->renderLightSources)
-        {
-            for (auto lightSource : lightSources)
-            {
-                QMatrix4x4 worldMatrix = lightSource->entity->transform->matrix();
-                QMatrix4x4 scaleMatrix; scaleMatrix.scale(0.1f, 0.1f, 0.1f);
-                QMatrix4x4 worldViewMatrix = camera->viewMatrix * worldMatrix * scaleMatrix;
-                QMatrix3x3 normalMatrix = worldViewMatrix.normalMatrix();
-                program.setUniformValue("worldMatrix", worldMatrix);
-                program.setUniformValue("worldViewMatrix", worldViewMatrix);
-                program.setUniformValue("normalMatrix", normalMatrix);
-
-                for (auto submesh : resourceManager->sphere->submeshes)
-                {
-                    // Send the material to the shader
-                    Material *material = resourceManager->materialLight;
-                    program.setUniformValue("albedo", material->albedo);
-                    program.setUniformValue("emissive", material->emissive);
-                    program.setUniformValue("smoothness", material->smoothness);
 
                     submesh->draw();
                 }
@@ -881,7 +856,7 @@ void DeferredRenderer::passLights(Camera *camera)
 
         program.setUniformValue("gPosition", 0);
         gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, texturePosition);
+        gl->glBindTexture(GL_TEXTURE_2D, textureWorldPos);
         program.setUniformValue("gNormal", 1);
         gl->glActiveTexture(GL_TEXTURE1);
         gl->glBindTexture(GL_TEXTURE_2D, textureNormal);
