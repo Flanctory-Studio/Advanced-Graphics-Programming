@@ -953,10 +953,10 @@ void DeferredRenderer::passSSAO(Camera* camera)
 
         program.setUniformValue("gPosition", 0);
         gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, texturePosition);
+        gl->glBindTexture(GL_TEXTURE_2D, textureMPosition);
         program.setUniformValue("gNormal", 1);
         gl->glActiveTexture(GL_TEXTURE1);
-        gl->glBindTexture(GL_TEXTURE_2D, textureNormal);
+        gl->glBindTexture(GL_TEXTURE_2D, textureMNormals);
         program.setUniformValue("texNoise", 2);
         gl->glActiveTexture(GL_TEXTURE2);
         gl->glBindTexture(GL_TEXTURE_2D, noiseTexture);
