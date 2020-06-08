@@ -676,9 +676,6 @@ void DeferredRenderer::passMeshes(Camera *camera)
 
     if (program.bind())
     {
-        program.setUniformValue("viewMatrix", camera->viewMatrix);
-        program.setUniformValue("projectionMatrix", camera->projectionMatrix);
-
         sendLightsToProgram(program, camera->viewMatrix);
 
         QVector<MeshRenderer*> meshRenderers;
@@ -710,6 +707,7 @@ void DeferredRenderer::passMeshes(Camera *camera)
                 program.setUniformValue("normalMatrix", normalMatrix);
                 program.setUniformValue("uWorldPos", meshRenderer->entity->transform->position);
                 program.setUniformValue("modelMatrix", meshRenderer->entity->transform->matrix());
+                program.setUniformValue("projectionMatrix", camera->projectionMatrix);
 
                 int materialIndex = 0;
                 for (auto submesh : mesh->submeshes)
