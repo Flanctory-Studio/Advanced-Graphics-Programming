@@ -704,10 +704,8 @@ void DeferredRenderer::passMeshes(Camera *camera)
 
             if (mesh != nullptr)
             {
-                QMatrix4x4 modelMatrix = meshRenderer->entity->transform->matrix();
-                QMatrix3x3 normalMatrix = (camera->viewMatrix * modelMatrix).normalMatrix();
+                QMatrix3x3 normalMatrix = (camera->viewMatrix * meshRenderer->entity->transform->matrix()).normalMatrix();
 
-                program.setUniformValue("modelMatrix", modelMatrix);
                 program.setUniformValue("viewMatrix", camera->viewMatrix);
                 program.setUniformValue("normalMatrix", normalMatrix);
                 program.setUniformValue("uWorldPos", meshRenderer->entity->transform->position);
