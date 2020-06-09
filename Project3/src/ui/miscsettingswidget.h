@@ -28,6 +28,7 @@ public slots:
     void onBackgroundColorClicked();
     void onOutlineColorClicked();
     void onVisualHintChanged();
+    void onGridStateChanged(int state);
 
     void RenderingPipelineStateChanged(int state);
 

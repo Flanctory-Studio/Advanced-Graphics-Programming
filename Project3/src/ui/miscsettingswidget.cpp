@@ -19,10 +19,9 @@ MiscSettingsWidget::MiscSettingsWidget(QWidget *parent) :
     connect(ui->spinFovY, SIGNAL(valueChanged(double)), this, SLOT(onCameraFovYChanged(double)));
     connect(ui->buttonBackgroundColor, SIGNAL(clicked()), this, SLOT(onBackgroundColorClicked()));
     connect(ui->buttonOutlineColor, SIGNAL(clicked()), this, SLOT(onOutlineColorClicked()));
-    connect(ui->checkBoxGrid, SIGNAL(clicked()), this, SLOT(onVisualHintChanged()));
+    connect(ui->checkBoxGrid, SIGNAL(stateChanged(int)), this, SLOT(onGridStateChanged(int)));
     connect(ui->checkBoxLightSources, SIGNAL(clicked()), this, SLOT(onVisualHintChanged()));
     connect(ui->renderingPipeline, SIGNAL(currentIndexChanged(int)), this, SLOT(RenderingPipelineStateChanged(int)));
-
     connect(ui->SSAO, SIGNAL(stateChanged(int)), this, SLOT(ReliefMappingStateChange(int)));
     connect(ui->Outline, SIGNAL(stateChanged(int)), this, SLOT(DepthOfFieldStateChange(int)));
 }
@@ -46,6 +45,8 @@ void MiscSettingsWidget::RenderingPipelineStateChanged(int activeIndex)
             break;
         }
     }
+
+    emit settingsChanged();
 }
 
 void MiscSettingsWidget::ReliefMappingStateChange(int state)
@@ -101,6 +102,7 @@ MiscSettingsWidget::~MiscSettingsWidget()
 void MiscSettingsWidget::onCameraSpeedChanged(double speed)
 {
     camera->speed = speed;
+    emit settingsChanged();
 }
 
 void MiscSettingsWidget::onOutlineWidth(double width)
@@ -157,4 +159,26 @@ void MiscSettingsWidget::onVisualHintChanged()
 void MiscSettingsWidget::on_buttonBackgroundColor_clicked()
 {
 
+}
+
+void MiscSettingsWidget::onGridStateChanged(int state)
+{
+    Qt::CheckState checked = Qt::CheckState(state);
+
+    switch(checked)
+    {
+        case Qt::CheckState::Unchecked:
+        {
+            miscSettings->renderGrid = false;
+            break;
+        }
+
+        case Qt::CheckState::Checked:
+        {
+            miscSettings->renderGrid = true;
+            break;
+        }
+    }
+
+    emit settingsChanged();
 }

@@ -129,7 +129,7 @@
       <item>
        <widget class="QCheckBox" name="checkBoxGrid">
         <property name="text">
-         <string>Grid (TODO)</string>
+         <string>Grid</string>
         </property>
         <property name="checked">
          <bool>true</bool>
