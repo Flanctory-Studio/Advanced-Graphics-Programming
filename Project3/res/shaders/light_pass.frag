@@ -30,7 +30,7 @@ void main()
     float Specular = texture(gAlbedoSpec, TexCoords).a;
     float AmbientOcclusion = 1.0;
 
-    if (SSAOActive)
+    if (useSSAO)
     {
         AmbientOcclusion = texture(gSSAO, TexCoords).r;
     }
