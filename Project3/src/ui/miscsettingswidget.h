@@ -31,8 +31,8 @@ public slots:
 
     void RenderingPipelineStateChanged(int state);
 
-    void ReliefMappingStateChange(int state);
-    void DepthOfFieldStateChange(int state);
+    void StateChangeSSAO(int state);
+    void StateChangeOutline(int state);
 
 private slots:
     void on_buttonBackgroundColor_clicked();
