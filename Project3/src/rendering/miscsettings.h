@@ -3,6 +3,8 @@
 
 #include <QColor>
 
+enum RenderingPipeline { ForwardRendering, DeferredRendering };
+
 class MiscSettings
 {
 public:
@@ -18,6 +20,9 @@ public:
     bool useOutline = true;
 
     double outlineWidth = 2.0;
+
+    RenderingPipeline renderingPipeline = RenderingPipeline::DeferredRendering;
+
 };
 
 #endif // MISCSETTINGS_H
