@@ -39,7 +39,7 @@ void main()
 
     if (length(Normal) >= 0.9 && length(Normal) <= 1.1)
     {    // then calculate lighting as usual
-        lighting  = vec3(Diffuse * 0.1 * AmbientOcclusion); // hard-coded ambient component
+        lighting  = Diffuse * 0.1 * AmbientOcclusion; // hard-coded ambient component
         vec3 viewDir  = normalize(viewPos - FragPos);
         for(int i = 0; i < 8; ++i)
         {
@@ -64,8 +64,5 @@ void main()
     }
 
     outColor = vec4(lighting, 1.0);
-
-
     //outColor = vec4(lightPositions[0], 1.0);
-
 }

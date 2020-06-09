@@ -576,7 +576,10 @@ void DeferredRenderer::RenderSSAO(Camera *camera)
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //SSAO
-    passSSAO(camera);
+    if (miscSettings->useSSAO)
+    {
+        passSSAO(camera);
+    }
 
     fboSSAO->release();
 }
@@ -591,7 +594,10 @@ void DeferredRenderer::RenderSSAOBlur(Camera *camera)
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //SSAO Blur
-    passSSAOBlur();
+    if (miscSettings->useSSAO)
+    {
+        passSSAOBlur();
+    }
 
     SSAOBlurFBO->release();
 }
@@ -656,12 +662,9 @@ void DeferredRenderer::render(Camera *camera)
 
     RenderSSAO(camera);
 
-    if (miscSettings->useSSAO)
-    {
     RenderSSAOBlur(camera);
 
     RenderLight(camera);
-    }
 
     RenderGrid(camera);
 
@@ -858,7 +861,7 @@ void DeferredRenderer::passLights(Camera *camera)
         program.setUniformValue("viewPos", camera->position);
         program.setUniformValue("backgroundColor", QVector3D(miscSettings->backgroundColor.redF(), miscSettings->backgroundColor.greenF(), miscSettings->backgroundColor.blueF()));
 
-        program.setUniformValue("SAOActive", miscSettings.useSSAO);
+        program.setUniformValue("useSSAO", miscSettings->useSSAO);
 
         program.setUniformValue("gPosition", 0);
         gl->glActiveTexture(GL_TEXTURE0);
