@@ -112,6 +112,7 @@ DeferredRenderer::DeferredRenderer() :
     //addTexture("Grid");
     addTexture("GlobalPos");
     addTexture("SSAO");
+    addTexture("SSAO Blur");
 
     rendererType = RendererType::DEFERRED;
 }
@@ -863,6 +864,9 @@ void DeferredRenderer::passLights(Camera *camera)
         program.setUniformValue("gAlbedoSpec", 2);
         gl->glActiveTexture(GL_TEXTURE2);
         gl->glBindTexture(GL_TEXTURE_2D, textureAlbedo);
+        program.setUniformValue("gSSAO", 3);
+        gl->glActiveTexture(GL_TEXTURE3);
+        gl->glBindTexture(GL_TEXTURE_2D, textureSSAOBlur);
 
         resourceManager->quad->submeshes[0]->draw();
 
@@ -946,7 +950,7 @@ void DeferredRenderer::passSSAOBlur()
     if(program.bind())
     {
         gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, textureSSAOBlur);
+        gl->glBindTexture(GL_TEXTURE_2D, textureSSAO);
 
         resourceManager->quad->submeshes[0]->draw();
 
@@ -991,6 +995,9 @@ void DeferredRenderer::passBlit()
         }
         else if(shownTexture() == "SSAO") {
             gl->glBindTexture(GL_TEXTURE_2D, textureSSAO);
+        }
+        else if(shownTexture() == "SSAO Blur") {
+            gl->glBindTexture(GL_TEXTURE_2D, textureSSAOBlur);
         }
         else if(shownTexture() == "Model Position") {
             gl->glBindTexture(GL_TEXTURE_2D, textureMPosition);

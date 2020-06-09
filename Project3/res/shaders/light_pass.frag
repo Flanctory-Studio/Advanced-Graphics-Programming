@@ -7,6 +7,7 @@ out vec4 outColor;
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedoSpec;
+uniform sampler2D gSSAO;
 
 uniform vec3 lightPositions[8];
 uniform vec3 lightColors[8];
@@ -26,12 +27,14 @@ void main()
     vec3 Normal = (texture(gNormal, TexCoords).rgb - vec3(0.5)) * 2.0;
     vec3 Diffuse = texture(gAlbedoSpec, TexCoords).rgb;
     float Specular = texture(gAlbedoSpec, TexCoords).a;
+    float AmbientOcclusion = texture(gSSAO, TexCoords).r;
+
 
     vec3 lighting = backgroundColor;
 
     if (length(Normal) >= 0.9 && length(Normal) <= 1.1)
     {    // then calculate lighting as usual
-        lighting  = Diffuse * 0.1; // hard-coded ambient component
+        lighting  = vec3(Diffuse * 0.1 * AmbientOcclusion); // hard-coded ambient component
         vec3 viewDir  = normalize(viewPos - FragPos);
         for(int i = 0; i < 8; ++i)
         {
