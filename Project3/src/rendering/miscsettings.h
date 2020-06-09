@@ -15,7 +15,7 @@ public:
     bool renderLightSources = true;
 
     bool useSSAO = false;
-    bool useOutline = false;
+    bool useOutline = true;
 
     double outlineWidth = 2.0;
 };
