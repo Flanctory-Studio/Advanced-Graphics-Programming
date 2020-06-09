@@ -22,8 +22,8 @@ MiscSettingsWidget::MiscSettingsWidget(QWidget *parent) :
     connect(ui->checkBoxGrid, SIGNAL(stateChanged(int)), this, SLOT(onGridStateChanged(int)));
     connect(ui->checkBoxLightSources, SIGNAL(clicked()), this, SLOT(onVisualHintChanged()));
     connect(ui->renderingPipeline, SIGNAL(currentIndexChanged(int)), this, SLOT(RenderingPipelineStateChanged(int)));
-    connect(ui->SSAO, SIGNAL(stateChanged(int)), this, SLOT(ReliefMappingStateChange(int)));
-    connect(ui->Outline, SIGNAL(stateChanged(int)), this, SLOT(DepthOfFieldStateChange(int)));
+    connect(ui->SSAO, SIGNAL(stateChanged(int)), this, SLOT(StateChangeSSAO(int)));
+    connect(ui->Outline, SIGNAL(stateChanged(int)), this, SLOT(StateChangeOutline(int)));
 }
 
 void MiscSettingsWidget::RenderingPipelineStateChanged(int activeIndex)
@@ -49,7 +49,7 @@ void MiscSettingsWidget::RenderingPipelineStateChanged(int activeIndex)
     emit settingsChanged();
 }
 
-void MiscSettingsWidget::ReliefMappingStateChange(int state)
+void MiscSettingsWidget::StateChangeSSAO(int state)
 {
     Qt::CheckState checked = Qt::CheckState(state);
 
@@ -71,7 +71,7 @@ void MiscSettingsWidget::ReliefMappingStateChange(int state)
     emit settingsChanged();
 }
 
-void MiscSettingsWidget::DepthOfFieldStateChange(int state)
+void MiscSettingsWidget::StateChangeOutline(int state)
 {
     Qt::CheckState checked = Qt::CheckState(state);
 
