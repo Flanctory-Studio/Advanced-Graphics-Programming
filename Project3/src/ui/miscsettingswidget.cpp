@@ -34,13 +34,11 @@ void MiscSettingsWidget::RenderingPipelineStateChanged(int activeIndex)
     {
         case RenderingPipelines::ForwardRendering:
         {
-            qDebug("ForwardRendering selected");
             miscSettings->renderingPipeline = RenderingPipeline::ForwardRendering;
             break;
         }
         case RenderingPipelines::DeferredRendering:
         {
-            qDebug("DeferredRendering selected");
             miscSettings->renderingPipeline = RenderingPipeline::DeferredRendering;
             break;
         }
