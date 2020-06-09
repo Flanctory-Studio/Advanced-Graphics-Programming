@@ -18,6 +18,7 @@ public:
 signals:
 
     void settingsChanged();
+    void RenderingPipelineChanged();
 
 public slots:
 

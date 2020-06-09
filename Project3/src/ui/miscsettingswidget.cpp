@@ -21,7 +21,7 @@ MiscSettingsWidget::MiscSettingsWidget(QWidget *parent) :
     connect(ui->buttonOutlineColor, SIGNAL(clicked()), this, SLOT(onOutlineColorClicked()));
     connect(ui->checkBoxGrid, SIGNAL(stateChanged(int)), this, SLOT(onGridStateChanged(int)));
     connect(ui->checkBoxLightSources, SIGNAL(clicked()), this, SLOT(onVisualHintChanged()));
-    connect(ui->renderingPipeline, SIGNAL(currentIndexChanged(int)), this, SLOT(RenderingPipelineStateChanged(int)));
+    //connect(ui->renderingPipeline, SIGNAL(currentIndexChanged(int)), this, SLOT(RenderingPipelineStateChanged(int)));
     connect(ui->SSAO, SIGNAL(stateChanged(int)), this, SLOT(StateChangeSSAO(int)));
     connect(ui->Outline, SIGNAL(stateChanged(int)), this, SLOT(StateChangeOutline(int)));
 }
@@ -33,7 +33,7 @@ void MiscSettingsWidget::RenderingPipelineStateChanged(int activeIndex)
     switch(activeIndex)
     {
         case RenderingPipelines::ForwardRendering:
-        {
+        {        
             miscSettings->renderingPipeline = RenderingPipeline::ForwardRendering;
             break;
         }
@@ -45,6 +45,7 @@ void MiscSettingsWidget::RenderingPipelineStateChanged(int activeIndex)
     }
 
     emit settingsChanged();
+    emit RenderingPipelineChanged();
 }
 
 void MiscSettingsWidget::StateChangeSSAO(int state)
