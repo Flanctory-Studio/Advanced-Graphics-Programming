@@ -544,10 +544,6 @@ void DeferredRenderer::RenderGeometry(Camera *camera)
     // Passes
     passMeshes(camera);
 
-    if(miscSettings->useSSAO)
-    {
-        //TODO: APPLY RELIEF MAPPING EFFECT
-    }
     fboGeometry->release();
 }
 
@@ -615,11 +611,6 @@ void DeferredRenderer::RenderLight(Camera *camera)
     gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     passLights(camera);
-
-    if(miscSettings->useOutline)
-    {
-        //TODO: APPLY DEPTH OF FIELD EFFECT
-    }
 
     fboLight->release();
 }
