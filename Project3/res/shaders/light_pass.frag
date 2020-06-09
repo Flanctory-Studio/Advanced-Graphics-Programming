@@ -13,7 +13,7 @@ uniform vec3 lightPositions[8];
 uniform vec3 lightColors[8];
 uniform float lightIntensity[8];
 uniform float lightRange[8];
-uniform bool SSAOActive;
+uniform bool useSSAO;
 
 float linear = 0.7;
 float quadratic = 1.8;

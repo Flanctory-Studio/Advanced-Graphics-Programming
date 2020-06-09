@@ -544,7 +544,7 @@ void DeferredRenderer::RenderGeometry(Camera *camera)
     // Passes
     passMeshes(camera);
 
-    if(miscSettings->useReliefMapping)
+    if(miscSettings->useSSAO)
     {
         //TODO: APPLY RELIEF MAPPING EFFECT
     }
@@ -608,7 +608,7 @@ void DeferredRenderer::RenderLight(Camera *camera)
 
     passLights(camera);
 
-    if(miscSettings->useDepthOfField)
+    if(miscSettings->useOutline)
     {
         //TODO: APPLY DEPTH OF FIELD EFFECT
     }
@@ -656,9 +656,12 @@ void DeferredRenderer::render(Camera *camera)
 
     RenderSSAO(camera);
 
+    if (miscSettings->useSSAO)
+    {
     RenderSSAOBlur(camera);
 
     RenderLight(camera);
+    }
 
     RenderGrid(camera);
 
