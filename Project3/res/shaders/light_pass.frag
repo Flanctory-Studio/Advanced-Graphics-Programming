@@ -13,6 +13,7 @@ uniform vec3 lightPositions[8];
 uniform vec3 lightColors[8];
 uniform float lightIntensity[8];
 uniform float lightRange[8];
+uniform bool SSAOActive;
 
 float linear = 0.7;
 float quadratic = 1.8;
@@ -27,8 +28,12 @@ void main()
     vec3 Normal = (texture(gNormal, TexCoords).rgb - vec3(0.5)) * 2.0;
     vec3 Diffuse = texture(gAlbedoSpec, TexCoords).rgb;
     float Specular = texture(gAlbedoSpec, TexCoords).a;
-    float AmbientOcclusion = texture(gSSAO, TexCoords).r;
+    float AmbientOcclusion = 1.0;
 
+    if (SSAOActive)
+    {
+        AmbientOcclusion = texture(gSSAO, TexCoords).r;
+    }
 
     vec3 lighting = backgroundColor;
 

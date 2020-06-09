@@ -56,13 +56,13 @@ void MiscSettingsWidget::ReliefMappingStateChange(int state)
     {
         case Qt::CheckState::Unchecked:
         {
-            miscSettings->useReliefMapping = false;
+            miscSettings->useSSAO = false;
             break;
         }
 
         case Qt::CheckState::Checked:
         {
-            miscSettings->useReliefMapping = true;
+            miscSettings->useSSAO = true;
             break;
         }
     }
@@ -76,13 +76,13 @@ void MiscSettingsWidget::DepthOfFieldStateChange(int state)
     {
         case Qt::CheckState::Unchecked:
         {
-            miscSettings->useDepthOfField = false;
+            miscSettings->useOutline = false;
             break;
         }
 
         case Qt::CheckState::Checked:
         {
-            miscSettings->useDepthOfField = true;
+            miscSettings->useOutline = true;
             break;
         }
     }
