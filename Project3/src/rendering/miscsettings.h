@@ -14,7 +14,7 @@ public:
     QColor outlineColor = QColorConstants::Red;
     bool renderLightSources = true;
 
-    bool userSSAO = false;
+    bool useSSAO = false;
     bool useOutline = false;
 
     double outlineWidth = 2.0;

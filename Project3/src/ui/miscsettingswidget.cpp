@@ -25,8 +25,8 @@ MiscSettingsWidget::MiscSettingsWidget(QWidget *parent) :
 
     connect(ui->renderingPipeline, SIGNAL(currentIndexChanged(int)), this, SLOT(RenderingPipelineStateChanged(int)));
 
-    connect(ui->ReliefMapping, SIGNAL(stateChanged(int)), this, SLOT(ReliefMappingStateChange(int)));
-    connect(ui->DepthOfField, SIGNAL(stateChanged(int)), this, SLOT(DepthOfFieldStateChange(int)));
+    connect(ui->SSAO, SIGNAL(stateChanged(int)), this, SLOT(ReliefMappingStateChange(int)));
+    connect(ui->Outline, SIGNAL(stateChanged(int)), this, SLOT(DepthOfFieldStateChange(int)));
 }
 
 void MiscSettingsWidget::RenderingPipelineStateChanged(int activeIndex)
