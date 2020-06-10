@@ -21,6 +21,23 @@ A project developed with QT by Aleix Gabarró, Óscar Hernández and Jonathan Mo
 ![SSAO Graphic Technique](https://i.gyazo.com/a3015f122413557c96e29aa9887137df.png "SSAO Graphic Technique")
 ![SSAO Final Result](https://i.gyazo.com/1f5bd1c9bb83b72abc01401345027aa4.jpg "SSAO Final Result")
 
+* Settings:
+From the misc settings tab you can edit different properties from the engine such as:
+    * Camera:
+        * Speed
+        * FOV Y
+    * Enviroment:
+        * Background color: Change the color of the background
+        * Outline color: Change the color of the outline
+        * Outline width: Change the width of the outline
+    * Editor visual hints:
+        * Grid: Activate/Deactivate the grid
+        * Light sources: Activate/Deactivate the light sources
+        * Selection outline: Activate/Deactivate the outline
+    * Rendering:
+        * SSAO: Activate/Deactivate the SSAO
+    
+
 * Controls:
 
   * LMB: Select Entities by left-clicking them in the scene or the hierarchy window.
