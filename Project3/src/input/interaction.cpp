@@ -23,6 +23,9 @@ bool Interaction::update()
     case State::Focusing:
         changed = focus();
         break;
+    case State::Orbiting:
+        changed = orbitalCamera();
+        break;
     }
 
     return changed;
@@ -32,7 +35,11 @@ bool Interaction::idle()
 {
     //OpenGLErrorGuard guard(__FUNCTION__);
 
-    if (input->mouseButtons[Qt::RightButton] == MouseButtonState::Pressed)
+    if(input->keys[Qt::Key_Space] == KeyState::Press || input->keys[Qt::Key_Space] == KeyState::Pressed)
+    {
+        nextState = State::Orbiting;
+    }
+    else if (input->mouseButtons[Qt::RightButton] == MouseButtonState::Pressed)
     {
         nextState = State::Navigating;
     }
@@ -239,6 +246,79 @@ bool Interaction::focus()
         idle = true;;
     }
 
+    return true;
+}
+
+bool Interaction::orbitalCamera()
+{
+    static float v = 0.0f; // Instant speed
+    static const float a = 5.0f; // Constant acceleration
+    static const float t = 1.0/60.0f; // Delta time
+
+    bool pollEvents = input->mouseButtons[Qt::RightButton] == MouseButtonState::Pressed;
+    bool cameraChanged = false;
+
+    if(selection->count <= 0 || !pollEvents)
+    {
+        nextState = State::Idle;
+        return false;
+    }
+
+    Entity* selectedEntity = selection->entities[0];
+
+    // Mouse delta smoothing
+    static float mousex_delta_prev[3] = {};
+    static float mousey_delta_prev[3] = {};
+    static int curr_mousex_delta_prev = 0;
+    static int curr_mousey_delta_prev = 0;
+    float mousey_delta = 0.0f;
+    float mousex_delta = 0.0f;
+
+    if (pollEvents) {
+        mousex_delta_prev[curr_mousex_delta_prev] = (input->mousex - input->mousex_prev);
+        mousey_delta_prev[curr_mousey_delta_prev] = (input->mousey - input->mousey_prev);
+        curr_mousex_delta_prev = curr_mousex_delta_prev % 3;
+        curr_mousey_delta_prev = curr_mousey_delta_prev % 3;
+        mousex_delta += mousex_delta_prev[0] * 0.33;
+        mousex_delta += mousex_delta_prev[1] * 0.33;
+        mousex_delta += mousex_delta_prev[2] * 0.33;
+        mousey_delta += mousey_delta_prev[0] * 0.33;
+        mousey_delta += mousey_delta_prev[1] * 0.33;
+        mousey_delta += mousey_delta_prev[2] * 0.33;
+    }
+
+    float yaw = camera->yaw;
+    float pitch = camera->pitch;
+
+    // Camera orbiting
+    if (mousex_delta != 0 || mousey_delta != 0)
+    {
+        cameraChanged = true;
+
+        QVector3D direction = camera->position - selectedEntity->transform->position;
+        direction.normalize();
+
+        QQuaternion rotation = QQuaternion::fromEulerAngles({-mousey_delta, -mousex_delta, 0.0f});
+        QVector3D newDirection = rotation * direction;
+
+        float entityRadius = 0.5;
+        if (selectedEntity->meshRenderer != nullptr && selectedEntity->meshRenderer->mesh != nullptr)
+        {
+            auto mesh = selectedEntity->meshRenderer->mesh;
+            const QVector3D minBounds = selectedEntity->transform->matrix() * mesh->bounds.min;
+            const QVector3D maxBounds = selectedEntity->transform->matrix() * mesh->bounds.max;
+            entityRadius = (maxBounds - minBounds).length();
+        }
+
+        QVector3D newCameraPosition = selectedEntity->transform->position + newDirection * entityRadius;
+        camera->position = newCameraPosition;
+
+        QQuaternion newCameraRot = QQuaternion::fromDirection(newDirection, {0.0f, 1.0f, 0.0f});
+        QVector3D euler = newCameraRot.toEulerAngles();
+
+        camera->pitch = euler.x();
+        camera->yaw = euler.y();
+    }
     return true;
 }
 
