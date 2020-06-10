@@ -15,9 +15,10 @@ private:
     bool idle();
     bool navigate();
     bool focus();
+    bool orbitalCamera();
 
 
-    enum State { Idle, Navigating, Focusing };
+    enum State { Idle, Navigating, Focusing, Orbiting };
     State state = State::Idle;
     State nextState = State::Idle;
 };
