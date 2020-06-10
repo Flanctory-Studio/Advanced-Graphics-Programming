@@ -21,6 +21,9 @@ A project developed with QT by Aleix Gabarró, Óscar Hernández and Jonathan Mo
 ![SSAO Graphic Technique](https://i.gyazo.com/a3015f122413557c96e29aa9887137df.png "SSAO Graphic Technique")
 ![SSAO Final Result](https://i.gyazo.com/1f5bd1c9bb83b72abc01401345027aa4.jpg "SSAO Final Result")
 
+* Orbital Camera:
+![Orbital Camera](https://user-images.githubusercontent.com/11388662/84320500-0e22bb00-ab72-11ea-83da-4ca49316bf80.gif "Orbital Camera")
+
 * Settings:
 From the misc settings tab you can edit different properties from the engine such as:
     * Camera:
